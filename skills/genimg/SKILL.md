@@ -1,132 +1,259 @@
 ---
 name: genimg
 description: >
-  AI 图片生成。关键词: "生成图片", "画", "generate image"
-allowed-tools: Bash, Read, Write
+  This skill should be used when generating AI images using Gemini.
+  Triggers: "生成图片", "画一张", "generate image", "create illustration".
+  Not for diagrams, charts, or flowcharts.
 ---
 
 # GenImg - AI Image Generation
 
-使用 Gemini 生成图片。
+Generate images using Gemini.
 
-## 适用场景
+## Prompt Enhancement (Default Behavior)
 
-- 抽象概念可视化（"创新"、"协作"、"增长"）
-- 场景/氛围营造（产品使用场景、团队照片）
-- 装饰性元素（图标、背景、徽章）
-- 情感连接（讲故事时的配图）
+**IMPORTANT**: Before calling generate.py, transform user's simple description into a structured, Gemini-optimized prompt.
 
-**不适合**：逻辑流程图、系统架构图、数据图表（这些用代码生成更精确）
+### Why Enhancement Matters
 
-## 配置
+Gemini excels at deep language understanding—**narrative descriptions** outperform keyword lists:
 
-复制 `.env.example` 到 `.env` 并填入 API key：
+```plain
+❌ 用户输入直接透传: "机器人咖啡师"
+✅ 增强后: "A photorealistic image of a stoic robot barista with glowing
+   blue optics, brewing coffee in a futuristic cafe. Soft ambient lighting
+   from overhead neon tubes, shallow depth of field, modern tech aesthetic."
+```
+
+### Enhancement Rules
+
+Expand user input into a **narrative paragraph** (50-150 words) containing:
+
+| Element | Description | Example |
+|---------|-------------|---------|
+| **Subject** | Specific description of main subject | "a stoic robot barista with glowing blue optics" |
+| **Action** | What the subject is doing | "brewing coffee" |
+| **Setting** | Scene/environment | "in a futuristic cafe" |
+| **Lighting** | Light type and direction | "soft ambient lighting from overhead neon tubes" |
+| **Technical** | Camera/depth of field/quality | "shallow depth of field, 4K quality" |
+| **Style** | Overall style (from -s parameter) | "modern tech aesthetic" |
+
+### Automatic Additions
+
+- If user does not explicitly request text, add `-n "text, words, letters, labels"`
+- Based on `-s` style parameter, incorporate corresponding style descriptors
+- Based on scene type, add appropriate lighting and composition suggestions
+
+### Enhancement Example
+
+**User says**: "画一个 A2A 协议的概念图，要有科技感"
+
+**Enhanced prompt**:
+```plian
+An isometric 3D illustration depicting the A2A protocol concept.
+Multiple AI agents represented as glowing geometric nodes connected
+by flowing data streams. Clean, modern tech aesthetic with blue
+accent lighting. Soft diffused top-down lighting creates depth.
+Professional, corporate style suitable for technical presentation.
+Sharp focus, high quality rendering.
+```
+
+**Execute command**:
+```bash
+uv run $SCRIPT "An isometric 3D illustration depicting..." \
+  -s tech -r 16:9 -n "text, words, letters" -o a2a_concept.png
+```
+
+### Edit Mode Enhancement
+
+When editing existing images, enhance user's modification instructions:
+
+**User says**: "把光线改暖一点"
+
+**Enhanced**:
+```plain
+Adjust the lighting to warmer tones. Add golden hour warmth with
+soft orange highlights. Maintain the original composition and
+subject placement. Keep all other elements unchanged.
+```
+
+## Use Cases
+
+- Abstract concept visualization ("innovation", "collaboration", "growth")
+- Scene/atmosphere creation (product usage scenarios, team photos)
+- Decorative elements (icons, backgrounds, badges)
+- Emotional connection (storytelling illustrations)
+
+**Not suitable for**: Logic flowcharts, system architecture diagrams, data charts (use code generation for precision)
+
+## Configuration
+
+Copy `.env.example` to `.env` and add API key:
 
 ```bash
 cp ~/.claude/skills/genimg/.env.example ~/.claude/skills/genimg/.env
 # Edit .env and add your GEMINI_API_KEY
 ```
 
-## 使用
+## Usage
 
 ```bash
 SCRIPT=~/.claude/skills/genimg/scripts/generate.py
 
-# 基本生成（uv run 自动读取脚本内 PEP 723 依赖声明）
+# Basic generation (uv run auto-reads PEP 723 dependency declarations)
 uv run $SCRIPT "a futuristic city" -o city.png
 
-# 带风格
+# With style
 uv run $SCRIPT "landscape" -s photo -o photo.png
 
-# 图标
+# Icon
 uv run $SCRIPT "cloud" -s icon -r 1:1 -o icon.png
 
-# 编辑图片
-uv run $SCRIPT "add rainbow" -e source.png -o edited.png
+# Edit image (Pro model recommended for higher quality)
+uv run $SCRIPT "add rainbow" -e source.png -o edited.png -m gemini-3-pro-image-preview
 
-# 查看风格
+# Batch variants + grid comparison (Flash model recommended for quick exploration)
+uv run $SCRIPT "abstract tech concept" --variants 4 --grid comparison.png
+
+# List styles
 uv run $SCRIPT --list-styles
 ```
 
-## 风格
+## Batch Variant Workflow
 
-| 风格 | 描述 |
-|------|------|
-| `photo` | 真实照片 |
-| `illustration` | 数字插画 |
-| `flat` | 扁平设计 |
-| `3d` | 3D 渲染 |
-| `minimalist` | 极简 |
-| `corporate` | 商务风 |
-| `tech` | 科技感 |
-| `sketch` | 手绘 |
-| `isometric` | 等轴测 |
-| `icon` | 图标 |
+**Recommended workflow**: Explore with Flash first, refine with Pro
 
-## 参数
+```bash
+# 1. Generate 4 variants (auto-creates version directory)
+uv run $SCRIPT "futuristic city" --variants 4 --grid grid.png -s tech
+# Output: output/futuristic_city_20251225_143052/v1.png...v4.png + grid.png
+
+# 2. Review grid.png and select preferred version (e.g., v2)
+
+# 3. Refine with Pro model
+uv run $SCRIPT "enhance lighting, add more details" \
+  -e output/futuristic_city_xxx/v2.png \
+  -o final.png \
+  -m gemini-3-pro-image-preview
+```
+
+**Variant parameters**:
+- `--variants N` - Generate N variants
+- `--grid PATH` - Output comparison grid image
+- `--grid-cols N` - Grid columns (default: 2)
+- `--output-dir DIR` - Custom output directory
+
+## Styles
+
+| Style | Description |
+|-------|-------------|
+| `photo` | Realistic photo |
+| `illustration` | Digital illustration |
+| `flat` | Flat design |
+| `3d` | 3D rendering |
+| `minimalist` | Minimal |
+| `corporate` | Business style |
+| `tech` | Tech aesthetic |
+| `sketch` | Hand-drawn |
+| `isometric` | Isometric view |
+| `icon` | Icon style |
+
+## Parameters
 
 ```plain
--o, --output    输出路径
--s, --style     风格
--r, --ratio     比例 (16:9, 9:16, 4:3, 1:1)
--n, --negative  避免的内容
--e, --edit      编辑已有图片
---json          JSON 输出
+-o, --output    Output path
+-s, --style     Style
+-r, --ratio     Aspect ratio (1:1, 2:3, 3:2, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9)
+--size          Resolution (1K, 2K, 4K), 4K only for Pro model
+-m, --model     Model selection
+-n, --negative  Content to avoid
+-e, --edit      Edit existing image
+--variants N    Generate N variants
+--grid PATH     Output comparison grid
+--grid-cols N   Grid columns (default: 2)
+--output-dir    Variant output directory
+--json          JSON output
 ```
+
+## Models
+
+| Model | Output Format | Resolution | Notes |
+|-------|---------------|------------|-------|
+| `gemini-2.5-flash-image` | PNG | 1K, 2K | Default, fast exploration |
+| `gemini-3-pro-image-preview` | JPEG→PNG | 1K, 2K, 4K | High quality, for refinement |
+
+**Model selection guide**:
+- **Batch variant exploration** → Flash (fast, cheap)
+- **Edit/refinement** → Pro (high quality, accurate text)
+
+**Auto format conversion**: Pro model returns JPEG; script auto-converts to PNG if output path is .png.
 
 ## Slide/Presentation Integration
 
-`genimg` + `slide` + `typst` 配合使用，为技术演示增加视觉吸引力。
+Use `genimg` + `slide` + `typst` together to enhance technical presentations.
 
-### 演示文稿推荐配置
+### Recommended Configuration for Presentations
 
-| 用途 | Prompt 示例 | Style | Ratio |
-|------|-------------|-------|-------|
-| 封面 | "futuristic logistics network" | `tech`, `corporate` | 16:9 |
-| 章节分隔 | "abstract data flow" | `minimalist` | 16:9 |
-| 概念图 | "AI agents collaborating" | `isometric`, `illustration` | 4:3 |
-| 图标 | "shipping container" | `icon`, `flat` | 1:1 |
-| 背景 | "subtle tech pattern" | `minimalist` + `-n "text, logo"` | 16:9 |
+| Use Case | Prompt Example | Style | Ratio |
+|----------|----------------|-------|-------|
+| Cover | "futuristic logistics network" | `tech`, `corporate` | 16:9 |
+| Section divider | "abstract data flow" | `minimalist` | 16:9 |
+| Concept | "AI agents collaborating" | `isometric`, `illustration` | 4:3 |
+| Icon | "shipping container" | `icon`, `flat` | 1:1 |
+| Background | "subtle tech pattern" | `minimalist` + `-n "text, logo"` | 16:9 |
 
-### 工作流
+### Workflow
 
 ```bash
-# 1. 在 slide 项目目录生成
+# 1. Navigate to slide project directory
 cd /path/to/slide/project
 SCRIPT=~/.claude/skills/genimg/scripts/generate.py
 
-# 2. 生成封面图
+# 2. Generate cover image
 uv run $SCRIPT "AI agents in supply chain network, abstract, professional" \
   -s tech -r 16:9 -o images/cover.png
 
-# 3. 生成概念图
+# 3. Generate concept image
 uv run $SCRIPT "three pillars supporting platform, integration communication authentication" \
   -s isometric -r 4:3 -o images/pillars.png
 
-# 4. 在 Typst 中导入
+# 4. Import in Typst
 # #image("images/cover.png", width: 100%)
 ```
 
-### 与 Diagraph 分工
+### Tool Division with Diagraph
 
-| 图类型 | 工具 | 原因 |
-|--------|------|------|
-| 流程图 | Diagraph | 精确控制节点和连接 |
-| 架构图 | Diagraph/D2 | 需要精确标签和层次 |
-| 数据图表 | Typst native | 数据准确性 |
-| 抽象概念 | **GenImg** | 视觉冲击力 |
-| 情感连接 | **GenImg** | 引起共鸣 |
-| 装饰元素 | **GenImg** | 增加设计感 |
+| Image Type | Tool | Reason |
+|------------|------|--------|
+| Flowchart | Diagraph | Precise control of nodes and connections |
+| Architecture | Diagraph/D2 | Needs precise labels and hierarchy |
+| Data chart | Typst native | Data accuracy |
+| Abstract concept | **GenImg** | Visual impact |
+| Emotional connection | **GenImg** | Creates resonance |
+| Decorative element | **GenImg** | Adds design appeal |
 
-### Prompt 技巧（演示文稿专用）
+### Prompt Tips (Presentations)
 
 ```bash
-# 避免文字（Typst 添加文字更精确）
+# Avoid text (Typst adds text more precisely)
 -n "text, words, letters, labels"
 
-# 保持简洁
+# Keep it simple
 "concept, minimal, clean, professional"
 
-# 配色一致
+# Consistent color scheme
 "blue accent color, #1565C0, corporate style"
 ```
+
+## Text Control
+
+**Industry consensus**: Text in AI-generated images is hard to control precisely. Even Ideogram (best at text) recommends post-processing overlays.
+
+**Recommended workflow**:
+1. Generate without text: auto-add `-n "text, words, letters, labels"`
+2. Overlay precise text later with Typst/Figma
+
+**If user truly needs text**:
+- Use Pro model (more accurate text)
+- Keep text under 25 characters
+- Mark text in prompt with quotes: `"Hello World"`
