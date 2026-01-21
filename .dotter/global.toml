@@ -1,37 +1,42 @@
-# Claude Craft Skills - Dotter Configuration
+# amp Craft Skills - Dotter Configuration
 # Install individual: dotter deploy -p <skill-name>
 # Install all: dotter deploy -p all-skills
 
 [helpers]
 
-[settings]
-default_target_type = "symbolic"
 
 # Individual Skills
-[deep-research.files]
-'skills/deep-research' = '~/.config/claude/skills/deep-research'
+[creating-slides.files]
+'skills/creating-slides' = '~/.config/amp/skills/creating-slides'
 
-[genimg.files]
-'skills/genimg' = '~/.config/claude/skills/genimg'
+[generating-images.files]
+'skills/generating-images' = '~/.config/amp/skills/generating-images'
 
-[report.files]
-'skills/report' = '~/.config/claude/skills/report'
+[researching-deeply.files]
+'skills/researching-deeply' = '~/.config/amp/skills/researching-deeply'
 
-[slide.files]
-'skills/slide' = '~/.config/claude/skills/slide'
+[researching-widely.files]
+'skills/researching-widely' = '~/.config/amp/skills/researching-widely'
 
-[typst.files]
-'skills/typst' = '~/.config/claude/skills/typst'
+[using-typst.files]
+'skills/using-typst' = '~/.config/amp/skills/using-typst'
 
-[wide-research.files]
-'skills/wide-research' = '~/.config/claude/skills/wide-research'
+[writing-reports.files]
+'skills/writing-reports' = '~/.config/amp/skills/writing-reports'
 
 # Meta Packages
 [research-skills]
-depends = ['deep-research', 'wide-research']
+depends = ['researching-deeply', 'researching-widely']
 
 [doc-skills]
-depends = ['report', 'slide', 'typst']
+depends = ['creating-slides', 'using-typst', 'writing-reports']
 
 [default]
-depends = ['deep-research', 'genimg', 'report', 'slide', 'typst', 'wide-research']
+depends = [
+  'creating-slides',
+  'generating-images',
+  'researching-deeply',
+  'researching-widely',
+  'using-typst',
+  'writing-reports',
+]
