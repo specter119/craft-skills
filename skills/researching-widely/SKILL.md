@@ -1,11 +1,10 @@
 ---
-name: wide-research
+name: researching-widely
 description: >
-  Process large volumes of local materials with parallel sub-agents. Features task decomposition,
-  context isolation, parallel execution, and narrative synthesis. Use when processing multiple
-  files, batch analysis, building narratives from existing materials, or when user mentions
-  "wide research", "batch analysis", "批量分析", "整理材料", "构建叙事".
-allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep
+  Processes large volumes of local materials with parallel sub-agents. Features: task decomposition,
+  context isolation, parallel execution, and narrative synthesis.
+  Use when asked to "wide research", "batch analysis", "process these files", "summarize all",
+  "批量分析", "整理这些材料", "构建叙事".
 ---
 
 # Wide Research Skill
@@ -64,9 +63,18 @@ Inspired by Manus Wide Research and grapeot's Codex implementation.
 
 ## Phase 1: Analyze
 
-1. **Inventory**: Enumerate all materials (see `references/templates.md`)
-2. **Classify**: Group by topic/file/section/batch (see `references/guidelines.md` for strategies)
+1. **Inventory**: Enumerate all materials (see `reference/templates.md`)
+2. **Classify**: Group by topic/file/section/batch
 3. **Plan**: Decide parallelization strategy
+
+**Grouping strategies**:
+
+| Strategy | When to Use | Example |
+|----------|-------------|---------|
+| By file | Each file is independent | 53 student blog posts |
+| By topic | Files cluster by subject | Research papers by domain |
+| By section | One large file with sections | Long report with chapters |
+| By batch | Arbitrary even distribution | Any large uniform set |
 
 **Output structure**:
 ```plain
@@ -92,7 +100,7 @@ Launch sub-agents with Task tool. Each receives:
 - Do NOT skip any items
 - Each item gets its own section
 
-See `references/templates.md` for sub-agent prompt template.
+See `reference/templates.md` for sub-agent prompt template.
 
 ---
 
@@ -103,13 +111,21 @@ See `references/templates.md` for sub-agent prompt template.
 3. **Deep Research**: Trigger for external info if needed
 4. **Synthesize**: Generate final report
 
-See `references/templates.md` for synthesis report template.
+See `reference/templates.md` for synthesis report template.
 
 ---
 
 ## Parallelization Guidelines
 
-**Rule**: Keep 5-10 items per sub-agent to prevent slacking. See `references/guidelines.md` for detailed table.
+| Total Items | Groups | Items/Group |
+|-------------|--------|-------------|
+| 1-10 | 1-2 | 5-10 |
+| 11-30 | 3-5 | 6-10 |
+| 31-50 | 5-8 | 6-10 |
+| 51-100 | 8-15 | 5-10 |
+| 100+ | 15-20 | 5-10 |
+
+**Rule**: Keep 5-10 items per sub-agent to prevent slacking.
 
 ---
 
@@ -129,17 +145,25 @@ Wide Research → re-synthesize with new info
 
 | File | Purpose | Usage |
 |------|---------|-------|
-| `references/templates.md` | All templates | Read for guidance |
-| `references/guidelines.md` | Tables & best practices | Reference as needed |
-| `scripts/render_docx.py` | Word to images | `uv run scripts/render_docx.py <file.docx>` |
-
-**Word files**: Use `render_docx.py` to convert DOCX → PNG images for reading. Requires LibreOffice and poppler-utils.
+| `reference/templates.md` | All templates | Read for guidance |
 
 ---
 
-## Error Handling & Best Practices
+## Error Handling
 
-See `references/guidelines.md` for detailed tables. Key rules:
-- 5-10 items per sub-agent
-- Explicit file paths, not patterns
-- Verify output count = input count
+| Error | Action |
+|-------|--------|
+| Sub-agent skips items | Re-run with smaller group |
+| File read fails | Note in gaps, continue |
+| Sub-agent timeout | Use partial results |
+| Output format wrong | Re-prompt with explicit format |
+
+---
+
+## Best Practices
+
+1. **Small groups**: 5-10 items per sub-agent
+2. **Explicit lists**: Give exact file paths, not patterns
+3. **Verify counts**: Output item count = input count
+4. **Isolated context**: Sub-agents don't know about other groups
+5. **File-based communication**: Write to files, supervisor reads

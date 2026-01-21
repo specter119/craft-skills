@@ -1,9 +1,9 @@
 ---
-name: report
+name: writing-reports
 description: >
-  报告内容结构与组织。当需要创建 report/paper/thesis/文档 时激活。
-  支持 Markdown 或 Typst 输出。Typst 技术参考 typst skill (references/report.md)。
-allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep, WebFetch, WebSearch
+  Structures and organizes reports, papers, theses, and documentation.
+  Use when asked to create report/paper/thesis/文档/报告/论文.
+  Supports Markdown or Typst output. For Typst technical reference, see typst skill.
 ---
 
 # Report - 结构与内容
@@ -36,7 +36,7 @@ Apply these frameworks based on goal (Claude knows the full methodology):
 
 ## 技术参考
 
-如需 Typst 输出，详见：`typst` skill → `references/report.md`
+如需 Typst 输出，详见：`using-typst` skill → `reference/report.md`
 
 ---
 
@@ -99,7 +99,7 @@ Apply these frameworks based on goal (Claude knows the full methodology):
         ↓
 选择输出格式：
 ├─ Markdown → 直接输出 .md
-└─ Typst → [typst skill] → 编译 PDF
+└─ Typst → [using-typst skill] → 编译 PDF
 ```
 
 ---

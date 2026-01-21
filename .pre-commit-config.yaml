@@ -4,7 +4,7 @@ repos:
     rev: v1.5.0
     hooks:
       - id: detect-secrets
-        args: ['--baseline', '.secrets.baseline']
+        args: ["--baseline", ".secrets.baseline"]
         exclude: package.lock.json
 
   # Standard pre-commit hooks
@@ -15,7 +15,7 @@ repos:
       - id: detect-private-key
       # Prevent committing AWS credentials
       - id: detect-aws-credentials
-        args: ['--allow-missing-credentials']
+        args: ["--allow-missing-credentials"]
       # Check for files that would conflict in case-insensitive filesystems
       - id: check-case-conflict
       # Ensure files end with newline
@@ -28,21 +28,11 @@ repos:
       - id: check-json
       # Prevent large files from being committed
       - id: check-added-large-files
-        args: ['--maxkb=500']
+        args: ["--maxkb=500"]
 
   # Markdown linting
   - repo: https://github.com/DavidAnson/markdownlint-cli2
     rev: v0.20.0
     hooks:
       - id: markdownlint-cli2
-        args: ['--fix']
-
-  # Local hooks
-  - repo: local
-    hooks:
-      - id: validate-skills
-        name: Validate Claude Code Skills
-        entry: ./scripts/validate-skills.sh
-        language: script
-        files: ^skills/.*SKILL\.md$
-        pass_filenames: false
+        args: ["--fix"]

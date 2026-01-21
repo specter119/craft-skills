@@ -1,7 +1,9 @@
 ---
-name: typst
-description: "Typst technical foundation layer providing syntax reference, toolchain commands, package management, and diagram solution selection (diagraph/D2/oxdraw). Serves as technical reference for slide and report skills."
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
+name: using-typst
+description: >
+  Provides Typst technical foundation: syntax reference, toolchain commands, package management,
+  and diagram solution selection (diagraph/D2/oxdraw).
+  Use when working with Typst documents, compiling .typ files, or needing Typst syntax help.
 ---
 
 # Typst Technical Foundation
@@ -22,9 +24,9 @@ Technical foundation for Typst document generation. For narrative and design gui
 
 | Document Type | Reference File | Content |
 |---------------|----------------|---------|
-| Slides | `references/touying.md` | Touying framework, animations, themes, page validation |
-| Reports | `references/report.md` | Report templates, academic formatting |
-| Diagrams | `references/diagraph.md` | Diagraph best practices (slides vs reports scenarios) |
+| Slides | `reference/touying.md` | Touying framework, animations, themes, page validation |
+| Reports | `reference/report.md` | Report templates, academic formatting |
+| Diagrams | `reference/diagraph.md` | Diagraph best practices (slides vs reports scenarios) |
 
 ## Core Tools
 

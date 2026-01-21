@@ -1,10 +1,9 @@
 ---
-name: deep-research
+name: researching-deeply
 description: >
-  Conduct comprehensive research with persistent output. Features: user clarification,
+  Conducts comprehensive research with persistent output. Features: user clarification,
   supervisor-based dynamic parallelization, source archival, and structured findings.
-  Activate on: "research", "调研", "研究", "深入了解", "investigate", "explore".
-allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep, WebFetch, WebSearch
+  Use when asked to "research", "调研", "研究", "深入了解", "investigate", "explore".
 ---
 
 # Deep Research Skill v2
@@ -51,8 +50,8 @@ Inspired by LangChain Open Deep Research. Key features:
 ## Phase 1: Scope
 
 1. **Clarify** (optional): Ask only if critical ambiguity exists
-2. **Decompose**: Break into subtopics internally (see `references/decomposition.md`)
-3. **Brief**: Generate research brief (see `references/formats.md`)
+2. **Decompose**: Break into subtopics internally (see `reference/decomposition.md`)
+3. **Brief**: Generate research brief (see `reference/formats.md`)
 4. **Structure**: Create output directory and inform user
 
 **Working Directory Logic:**
@@ -108,7 +107,7 @@ Inspired by LangChain Open Deep Research. Key features:
 3. Archive to `_sources/{hash}.md`
 4. Write `findings.md`
 
-See `references/formats.md` for sub-agent prompt and findings format.
+See `reference/formats.md` for sub-agent prompt and findings format.
 
 **Supervisor review:** Check coverage → identify gaps → spawn follow-up if needed.
 
@@ -134,10 +133,10 @@ cp {skill_dir}/assets/report-zh.md {output_dir}/report.md
 
 | File | Purpose | Usage |
 |------|---------|-------|
-| `references/decomposition.md` | Topic breakdown patterns | Read for guidance |
-| `references/examples.md` | Usage examples | Read for guidance |
-| `references/formats.md` | Source, findings, sub-agent formats | Read for guidance |
-| `references/tools.md` | Tool selection guide | Read for guidance |
+| `reference/decomposition.md` | Topic breakdown patterns | Read for guidance |
+| `reference/examples.md` | Usage examples | Read for guidance |
+| `reference/formats.md` | Source, findings, sub-agent formats | Read for guidance |
+| `reference/tools.md` | Tool selection guide | Read for guidance |
 | `assets/report-en.md` | English report template | Copy to output, fill placeholders |
 | `assets/report-zh.md` | Chinese report template | Copy to output, fill placeholders |
 

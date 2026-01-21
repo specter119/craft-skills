@@ -1,7 +1,9 @@
 ---
-name: slide
-description: "Slide narrative framework and visual design. This skill should be used when creating slides or presentations. Activates Claude's knowledge of Nancy Duarte, Edward Tufte, Gestalt principles, and other presentation design expertise."
-allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep, WebFetch, WebSearch
+name: creating-slides
+description: >
+  Designs slide narrative frameworks and visual layouts.
+  Use when creating slides, presentations, or pitch decks.
+  Applies Nancy Duarte, Edward Tufte, Gestalt principles, and presentation design expertise.
 ---
 
 # Slide - Narrative & Visual Design
@@ -79,7 +81,7 @@ Evaluate each slide for:
       ↓
 2. Select narrative framework based on goal
       ↓
-3. Generate Typst code (technical details: typst skill → references/touying.md)
+3. Generate Typst code (technical details: using-typst skill → reference/touying.md)
       ↓
 4. Content self-check:
    - Titles: assertion sentences? (Assertion-Evidence)
@@ -91,7 +93,7 @@ Evaluate each slide for:
 5. Compile: tinymist diagnostics → typst compile
       ↓
 6. Page validation: Grep title count → pdfinfo actual pages
-   (details: typst skill → references/touying.md "Page Validation")
+   (details: using-typst skill → reference/touying.md "Page Validation")
       ↓
 7. Visual check: pdftoppm → Read PNG → evaluate with design knowledge
       ↓
@@ -135,11 +137,11 @@ These are references, not templates. Adapt based on content and audience.
 ```plain
 [research skill] → gather information
        ↓
-[slide skill] → narrative + visual design
+[creating-slides skill] → narrative + visual design
        ↓
-[typst skill] → technical implementation
+[using-typst skill] → technical implementation
        ↓
-[genimg skill] → AI-generated illustrations
+[generating-images skill] → AI-generated illustrations
 ```
 
 ## GenImg Integration
