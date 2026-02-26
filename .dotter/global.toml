@@ -18,6 +18,9 @@
 [researching-widely.files]
 'skills/researching-widely' = '~/.config/amp/skills/researching-widely'
 
+[fetching-onenote-wiki.files]
+'skills/fetching-onenote-wiki' = '~/.config/amp/skills/fetching-onenote-wiki'
+
 [using-typst.files]
 'skills/using-typst' = '~/.config/amp/skills/using-typst'
 
@@ -34,6 +37,7 @@ depends = ['creating-slides', 'using-typst', 'writing-reports']
 [default]
 depends = [
   'creating-slides',
+  'fetching-onenote-wiki',
   'generating-images',
   'researching-deeply',
   'researching-widely',
