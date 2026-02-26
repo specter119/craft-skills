@@ -22,5 +22,6 @@ __pycache__/
 research/
 
 # dotter
+/.dotter/cache/
 /.dotter/cache.toml
 /.dotter/local.toml
