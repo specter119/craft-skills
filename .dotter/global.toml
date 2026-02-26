@@ -1,31 +1,33 @@
-# amp Craft Skills - Dotter Configuration
+# Agents Craft Skills - Dotter Configuration
 # Install individual: dotter deploy -p <skill-name>
-# Install all: dotter deploy -p all-skills
+# Install all: dotter deploy -p default
 
 [helpers]
 
+[settings]
+default_target_type = "symbolic"
 
 # Individual Skills
 [creating-slides.files]
-'skills/creating-slides' = '~/.config/amp/skills/creating-slides'
-
-[generating-images.files]
-'skills/generating-images' = '~/.config/amp/skills/generating-images'
-
-[researching-deeply.files]
-'skills/researching-deeply' = '~/.config/amp/skills/researching-deeply'
-
-[researching-widely.files]
-'skills/researching-widely' = '~/.config/amp/skills/researching-widely'
+'skills/creating-slides' = '~/.config/agents/skills/creating-slides'
 
 [fetching-onenote-wiki.files]
-'skills/fetching-onenote-wiki' = '~/.config/amp/skills/fetching-onenote-wiki'
+'skills/fetching-onenote-wiki' = '~/.config/agents/skills/fetching-onenote-wiki'
+
+[generating-images.files]
+'skills/generating-images' = '~/.config/agents/skills/generating-images'
+
+[researching-deeply.files]
+'skills/researching-deeply' = '~/.config/agents/skills/researching-deeply'
+
+[researching-widely.files]
+'skills/researching-widely' = '~/.config/agents/skills/researching-widely'
 
 [using-typst.files]
-'skills/using-typst' = '~/.config/amp/skills/using-typst'
+'skills/using-typst' = '~/.config/agents/skills/using-typst'
 
 [writing-reports.files]
-'skills/writing-reports' = '~/.config/amp/skills/writing-reports'
+'skills/writing-reports' = '~/.config/agents/skills/writing-reports'
 
 # Meta Packages
 [research-skills]

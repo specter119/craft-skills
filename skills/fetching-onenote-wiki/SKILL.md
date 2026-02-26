@@ -25,7 +25,7 @@ converts HTML content to Markdown, and caches locally for offline use.
 Copy `.env.example` from this skill directory to your project root:
 
 ```bash
-cp ~/.config/amp/skills/fetching-onenote-wiki/.env.example /path/to/project/.env
+cp ~/.config/agents/skills/fetching-onenote-wiki/.env.example /path/to/project/.env
 ```
 
 Required variables (see `.env.example` for defaults and comments):

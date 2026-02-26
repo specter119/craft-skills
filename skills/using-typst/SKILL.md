@@ -8,7 +8,7 @@ description: >
 
 # Typst Technical Foundation
 
-Technical foundation for Typst document generation. For narrative and design guidance, refer to `slide` or `report` skills.
+Technical foundation for Typst document generation. For narrative and design guidance, refer to `creating-slides` or `writing-reports` skills.
 
 ## Workflow
 
@@ -70,7 +70,7 @@ Typst requires fixed version numbers. Query latest versions before generating co
 
 ## Diagram Solution Selection
 
-**Default: diagraph > D2 > oxdraw** (see `references/diagraph.md` for scene-specific practices)
+**Default: diagraph > D2 > oxdraw** (see `reference/diagraph.md` for scene-specific practices)
 
 | Scenario | Tool | Reason |
 |----------|------|--------|

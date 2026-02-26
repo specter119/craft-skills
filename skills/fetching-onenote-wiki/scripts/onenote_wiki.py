@@ -4,6 +4,7 @@
 #     "httpx",
 #     "msal",
 #     "markdownify",
+#     "beautifulsoup4",
 #     "orjson",
 #     "python-dotenv",
 # ]

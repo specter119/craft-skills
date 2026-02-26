@@ -3,7 +3,7 @@ name: writing-reports
 description: >
   Structures and organizes reports, papers, theses, and documentation.
   Use when asked to create report/paper/thesis/文档/报告/论文.
-  Supports Markdown or Typst output. For Typst technical reference, see typst skill.
+  Supports Markdown or Typst output. For Typst technical reference, see using-typst skill.
 ---
 
 # Report - 结构与内容
@@ -47,9 +47,9 @@ Apply these frameworks based on goal (Claude knows the full methodology):
 ├─ 说服管理层/决策者 → SCQA 或金字塔原理
 ├─ 发表学术论文 → IMRaD
 ├─ 编写技术文档 → 倒金字塔
-├─ 融资/商业提案 → Problem-Solution-Impact (参考 slide skill)
-├─ 分享案例经验 → STAR (参考 slide skill)
-└─ 教育培训 → 故事弧 (参考 slide skill)
+├─ 融资/商业提案 → Problem-Solution-Impact (参考 creating-slides skill)
+├─ 分享案例经验 → STAR (参考 creating-slides skill)
+└─ 教育培训 → 故事弧 (参考 creating-slides skill)
 ```
 
 ---
@@ -77,11 +77,24 @@ Apply these frameworks based on goal (Claude knows the full methodology):
 │     ├─ 规划图表和表格位置                                         │
 │     └─ 收集支撑数据                                              │
 ├─────────────────────────────────────────────────────────────────┤
+│  2.5 Oracle 读者审视 (RECOMMENDED)                    ← NEW     │
+│     ├─ 委托 @oracle: 扮演目标读者批判性审视大纲                    │
+│     ├─ 验证: 论点清晰度、逻辑链条、So What                         │
+│     └─ 处理反馈后再进入内容撰写                                    │
+├─────────────────────────────────────────────────────────────────┤
 │  3. 选择输出格式                                                  │
 │     ├─ Markdown → 直接写入 .md                                   │
-│     └─ Typst → 参考 typst skill (references/report.md)          │
+│     └─ Typst → 参考 using-typst skill (reference/report.md)      │
 ├─────────────────────────────────────────────────────────────────┤
-│  4. 质量自检                                                      │
+│  4. 内容撰写                                                      │
+│     ├─ 按框架结构撰写各章节                                        │
+│     └─ 确保数据和引用支撑论点                                      │
+├─────────────────────────────────────────────────────────────────┤
+│  4.5 Oracle 内容审视 (OPTIONAL)                       ← NEW     │
+│     ├─ 初稿完成后，委托 @oracle 评估说服力                         │
+│     └─ 特别检查: Evidence 是否充分、结论是否可行动                  │
+├─────────────────────────────────────────────────────────────────┤
+│  5. 质量自检                                                      │
 │     ├─ MECE: 论点独立且完整？                                     │
 │     ├─ So What: 每段都有价值？                                    │
 │     └─ Data-ink: 每个元素都传递信息？                             │
@@ -95,12 +108,37 @@ Apply these frameworks based on goal (Claude knows the full methodology):
 ```plain
 [research skill] → 调研收集信息
         ↓
-[report] → 选择框架、组织内容
+[writing-reports] → 选择框架、组织内容
         ↓
 选择输出格式：
 ├─ Markdown → 直接输出 .md
 └─ Typst → [using-typst skill] → 编译 PDF
 ```
+
+---
+
+## Agent Delegation
+
+**writing-reports skill 需要委托的能力**（这些是 writing-reports skill 没有的能力，需要其他 agent 补充）：
+
+| Phase | Delegate To | When |
+|-------|-------------|------|
+| 大纲审视 | `@oracle` | 大纲完成后，扮演读者批判性审视 |
+| 内容审视 | `@oracle` | 初稿完成后，评估说服力和逻辑链 |
+
+### Oracle 读者审视 (Phase 2.5 & Phase 4.5)
+
+委托 Oracle 扮演目标读者进行批判性审视。**On-demand 触发**，不是每次都需要。
+
+| 时机 | 触发条件 | 目的 |
+|------|---------|------|
+| **大纲审视** | 大纲完成后 | 验证论点结构和逻辑链条 |
+| **内容审视** | 初稿完成后 | 评估说服力、信息密度、So What |
+| **迭代困境** | 不知如何改进时 | 获得新视角突破 |
+
+详细的 Prompt 模板、Review Focus 说明、使用方法见 `reference/oracle-delegation.md`。
+
+**核心心态**：Oracle 的批评 = 真实读者可能的反应。不是「AI 不理解」，而是「如果读者也不理解怎么办」。
 
 ---
 

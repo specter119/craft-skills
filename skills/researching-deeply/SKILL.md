@@ -65,16 +65,30 @@ Inspired by LangChain Open Deep Research. Key features:
 
 场景 3: 用户很明确 (如 "调研 A2A，存到项目文档里")
   → Double confirm: "研究结果会存到 ./docs/research/a2a-xxx/，确认？"
+
+场景 4: 为 slide/report 项目调研
+  → 检测当前目录是否在 slides/ 或 reports/ 下
+  → 如果是，输出到 {project}/research/ 目录
+  → 使用 sources/ (而非 _sources/) 匹配项目规范
 ```
 
 **Output Structure:**
 
 ```plain
+# 独立调研项目
 {cwd}/research/{topic-slug}/
 ├── _sources/           # Archived originals
 ├── {subtopic-1}/findings.md
 ├── {subtopic-2}/findings.md
 └── report.md           # Final output
+
+# Slide/Report 项目调研 (自动检测)
+{project}/research/
+├── sources/            # 原始材料 (无下划线，匹配项目规范)
+│   └── {topic}-{source}-{date}.md
+├── notes/              # 调研笔记
+│   └── {nn}-{topic}.md
+└── synthesis.md        # 综合分析
 ```
 
 **DO NOT ask user to confirm:** Subtopic names, internal directory structure, file naming.
@@ -156,8 +170,29 @@ cp {skill_dir}/assets/report-zh.md {output_dir}/report.md
 ## Best Practices
 
 1. **Brief first**: Always generate research brief before diving in
-2. **Archive everything**: Every valuable URL → `_sources/`
+2. **Archive everything**: Every valuable URL → `_sources/` or `sources/`
 3. **Clean before return**: Sub-agents summarize, don't dump raw
 4. **One-shot write**: Final report in single pass
 5. **Note gaps honestly**: Missing info is valuable metadata
 6. **Source traceability**: Every claim links to archived source
+
+## Raw Material Archival (CRITICAL)
+
+**总结 ≠ 原始材料。两者都要保存。**
+
+| 只保存总结 | 保存原始材料 |
+|-----------|-------------|
+| 丢失细节和上下文 | 可随时回溯验证 |
+| 无法追溯来源 | 可引用具体出处 |
+| 难以补充内容 | 可从原始材料中挖掘新内容 |
+| 总结可能有偏差 | 原始材料是 ground truth |
+
+**Sub-agent 必须做的事**：
+1. Fetch 完整网页内容（不是只取摘要）
+2. 保存到 `sources/` 目录，包含完整原文
+3. 元数据：URL、抓取时间、来源类型
+4. 然后才能写 findings.md（基于原始材料提炼）
+
+**命名规范** (for slide/report projects):
+- `{topic}-{source}-{YYYY-MM-DD}.md`
+- 示例: `opencode-github-readme-2026-01.md`

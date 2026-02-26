@@ -91,14 +91,14 @@ subject placement. Keep all other elements unchanged.
 Copy `.env.example` to `.env` and add API key:
 
 ```bash
-cp ~/.config/amp/skills/generating-images/.env.example ~/.config/amp/skills/generating-images/.env
+cp ~/.config/agents/skills/generating-images/.env.example ~/.config/agents/skills/generating-images/.env
 # Edit .env and add your GEMINI_API_KEY
 ```
 
 ## Usage
 
 ```bash
-SCRIPT=~/.config/amp/skills/generating-images/scripts/generate.py
+SCRIPT=~/.config/agents/skills/generating-images/scripts/generate.py
 
 # Basic generation (uv run auto-reads PEP 723 dependency declarations)
 uv run $SCRIPT "a futuristic city" -o city.png
@@ -190,7 +190,7 @@ uv run $SCRIPT "enhance lighting, add more details" \
 
 ## Slide/Presentation Integration
 
-Use `genimg` + `slide` + `typst` together to enhance technical presentations.
+Use `generating-images` + `creating-slides` + `using-typst` together to enhance technical presentations.
 
 ### Recommended Configuration for Presentations
 
@@ -207,7 +207,7 @@ Use `genimg` + `slide` + `typst` together to enhance technical presentations.
 ```bash
 # 1. Navigate to slide project directory
 cd /path/to/slide/project
-SCRIPT=~/.config/amp/skills/generating-images/scripts/generate.py
+SCRIPT=~/.config/agents/skills/generating-images/scripts/generate.py
 
 # 2. Generate cover image
 uv run $SCRIPT "AI agents in supply chain network, abstract, professional" \
