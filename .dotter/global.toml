@@ -1,13 +1,9 @@
-# Agents Craft Skills - Dotter Configuration
-# Install individual: dotter deploy -p <skill-name>
-# Install all: dotter deploy -p default
+# ~/.agents/skills is a well-known location agent skills.
+# eventough I'd prefer ~/.config/agents/skills
+# Moreover, symblic skills are not discoverable by codex
+# then it's suggested to maintain your own skills physicall in ~/.agents
+# which is a most generic soluton for major coding clis.
 
-[helpers]
-
-[settings]
-default_target_type = "symbolic"
-
-# Individual Skills
 [creating-slides.files]
 'skills/creating-slides' = '~/.config/agents/skills/creating-slides'
 
