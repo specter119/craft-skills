@@ -1,0 +1,54 @@
+# Trigger evaluation cases for msgraph-fetch skill routing.
+# These help distinguish when to route to this skill vs. other skills.
+
+version: 1
+
+# --- SHOULD trigger this skill ---
+positive:
+  - input: "搜索 SharePoint 上关于 Fin skill 的文档"
+    expected_action: search
+    note: "Content search across SharePoint"
+
+  - input: "search internal wiki for booking cancellation"
+    expected_action: search
+    note: "English search query targeting internal wiki"
+
+  - input: "拉取这个 SharePoint 文件"
+    expected_action: fetch
+    note: "Single file fetch"
+
+  - input: "同步 OneDrive 目录到本地"
+    expected_action: fetch
+    note: "Drive folder sync"
+
+  - input: "列出 IACB site 下的 notebook"
+    expected_action: fetch
+    note: "Site/notebook discovery"
+
+  - input: "同步 OneNote wiki 到本地 Markdown"
+    expected_action: fetch
+    note: "OneNote sync to local"
+
+  - input: "search SharePoint for domain agent design"
+    expected_action: search
+    note: "Content search with technical keywords"
+
+# --- SHOULD NOT trigger this skill ---
+negative:
+  - input: "搜索 GitHub 上的开源项目"
+    note: "GitHub search, not Microsoft Graph"
+
+  - input: "帮我整理会议记录"
+    note: "Note cleanup, not Graph fetch"
+
+  - input: "研究 Fin 2.0 的架构设计"
+    note: "General research, use deep-research instead"
+
+  - input: "从 ALM 拉取 story 详情"
+    note: "ALM fetch, use alm-story-sync instead"
+
+  - input: "下载这个网页的内容"
+    note: "Web fetch, not SharePoint/OneDrive"
+
+  - input: "查看我的邮件"
+    note: "Outlook mail, not currently in scope"

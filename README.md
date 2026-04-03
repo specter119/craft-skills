@@ -40,6 +40,16 @@ jj log
 jj status
 ```
 
+### Mine History-Derived Eval Seeds
+
+如果想把历史 agent 对话里的真实 skill 调用痕迹整理成脱敏后的 eval 候选，可以运行：
+
+```bash
+uv run scripts/build_history_eval_report.py --global-history
+```
+
+默认会调用 `xurl` 检索会话历史，并生成 `reports/history-derived-evals.md`。这个结果是候选种子，不是自动替换正式 `evals/` 的 ground truth。
+
 ## Available Skills
 
 | Skill | Description | Trigger Keywords |
@@ -51,7 +61,7 @@ jj status
 | **typst-authoring** | Typst authoring foundation layer | Used by slide-building/report-building |
 | **genimg** | Generate images for content | "生成图片", "配图" |
 | **marimo-eda-prototype** | Write EDA-first marimo notebooks with restrained UI and clear extraction boundaries | "marimo", "EDA notebook", "prototype-first" |
-| **msgraph-fetch** | Unified Microsoft Graph fetch for SharePoint, OneDrive, and OneNote | "拉 SharePoint 文件", "同步 OneDrive", "拉取 onenote" |
+| **msgraph-fetch** | Search, fetch, and sync Microsoft Graph content for SharePoint, OneDrive, and OneNote | "搜索 SharePoint", "拉 SharePoint 文件", "同步 OneDrive", "拉取 onenote" |
 
 ## Usage
 

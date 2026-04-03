@@ -1,0 +1,4 @@
+interface:
+  display_name: "Microsoft Graph Explore"
+  short_description: "Search, fetch, and sync from SharePoint, OneDrive, OneNote"
+  default_prompt: "Use $msgraph-fetch to search SharePoint/OneDrive content, fetch files from SharePoint, sync OneDrive folders, or sync OneNote notebooks via Microsoft Graph API."

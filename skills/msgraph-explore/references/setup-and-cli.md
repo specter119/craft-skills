@@ -3,7 +3,7 @@
 ## 环境准备
 
 ```bash
-cp skills/msgraph-fetch/.env.example /path/to/project/.env
+cp skills/msgraph-explore/.env.example /path/to/project/.env
 ```
 
 需要的环境变量：
@@ -29,17 +29,33 @@ cp skills/msgraph-fetch/.env.example /path/to/project/.env
 
 ## 常用命令
 
+### Search Content
+
+```bash
+uv run skills/msgraph-explore/scripts/msgraph_search.py "Fin skill design"
+```
+
+可选：
+
+```bash
+uv run skills/msgraph-explore/scripts/msgraph_search.py "Fin skill design" \
+  --entity-types driveItem,listItem \
+  --site-path "sites/IACB" \
+  --max-results 10 \
+  --json
+```
+
 ### Fetch SharePoint File
 
 ```bash
-uv run skills/msgraph-fetch/scripts/msgraph_fetch.py fetch-file \
+uv run skills/msgraph-explore/scripts/msgraph_fetch.py fetch-file \
   --url "<sharepoint-url>"
 ```
 
 ### Sync Drive Folder
 
 ```bash
-uv run skills/msgraph-fetch/scripts/msgraph_fetch.py sync-folder \
+uv run skills/msgraph-explore/scripts/msgraph_fetch.py sync-folder \
   --remote-path "ByProject/IACB/smart-invoice" \
   --output-dir "./data/smart-invoice"
 ```
@@ -47,18 +63,18 @@ uv run skills/msgraph-fetch/scripts/msgraph_fetch.py sync-folder \
 ### Discover Sites / Notebooks / Sections
 
 ```bash
-uv run skills/msgraph-fetch/scripts/msgraph_fetch.py list-sites "DevSecOps"
-uv run skills/msgraph-fetch/scripts/msgraph_fetch.py list-notebooks --site-id "<site-id>"
-uv run skills/msgraph-fetch/scripts/msgraph_fetch.py list-sections \
+uv run skills/msgraph-explore/scripts/msgraph_fetch.py list-sites "DevSecOps"
+uv run skills/msgraph-explore/scripts/msgraph_fetch.py list-notebooks --site-id "<site-id>"
+uv run skills/msgraph-explore/scripts/msgraph_fetch.py list-sections \
   --site-id "<site-id>" \
   --notebook-id "<notebook-id>"
-uv run skills/msgraph-fetch/scripts/msgraph_fetch.py list-pages --site-id "<site-id>"
+uv run skills/msgraph-explore/scripts/msgraph_fetch.py list-pages --site-id "<site-id>"
 ```
 
 ### Fetch Single OneNote Page
 
 ```bash
-uv run skills/msgraph-fetch/scripts/msgraph_fetch.py fetch-onenote-page \
+uv run skills/msgraph-explore/scripts/msgraph_fetch.py fetch-onenote-page \
   --site-id "<site-id>" \
   --page-id "<page-id>"
 ```
@@ -66,7 +82,7 @@ uv run skills/msgraph-fetch/scripts/msgraph_fetch.py fetch-onenote-page \
 ### Fetch OneNote
 
 ```bash
-uv run skills/msgraph-fetch/scripts/msgraph_fetch.py fetch-onenote \
+uv run skills/msgraph-explore/scripts/msgraph_fetch.py fetch-onenote \
   --site-id "<site-id>" \
   --output-dir "./wiki_cache"
 ```
