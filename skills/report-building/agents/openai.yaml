@@ -1,4 +1,4 @@
 interface:
   display_name: "Report Building"
-  short_description: "Structure reports, papers, documentation"
-  default_prompt: "Use $report-building when creating reports, papers, theses, or structured documentation."
+  short_description: "Structure long-form reports and documentation"
+  default_prompt: "Use $report-building for reports, papers, proposals, and other long-form structured documents. Do not use it for slide decks or Typst-only implementation tasks."
