@@ -38,6 +38,7 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep
 - `references/guidelines.md`: 并行粒度、错误处理、最佳实践
 - `references/templates.md`: inventory / classify / sub-agent / synthesis 模板
 - `evals/trigger-cases.md`: 最小触发样例
+- `evals/execution-cases.md`: 关键执行场景
 - `reports/optimization-notes.md`: 本轮重构判断
 
 ## 输出契约

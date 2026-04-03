@@ -37,8 +37,8 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep, WebFetch, WebSearch
 - `references/framework-selection.md`
 - `references/workflow.md`
 - `references/oracle-delegation.md`
-- `evals/trigger_eval.md`
-- `evals/execution_eval.md`
+- `evals/trigger-cases.md`
+- `evals/execution-cases.md`
 - `reports/optimization-notes.md`
 
 ## 输出契约

@@ -39,6 +39,7 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 - `references/report.md`
 - `references/diagraph.md`
 - `evals/trigger-cases.md`
+- `evals/execution-cases.md`
 - `reports/optimization-notes.md`
 
 ## 输出契约

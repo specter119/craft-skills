@@ -36,6 +36,7 @@ description: >
 - `references/prompt-enhancement.md`: prompt 扩展规则、示例与编辑模式
 - `references/cli-workflow.md`: CLI 用法、模型选择、variants/grid 工作流
 - `evals/trigger-cases.md`: 最小触发样例
+- `evals/execution-cases.md`: 关键执行场景
 - `reports/optimization-notes.md`: 本轮重构判断与后续缺口
 
 ## 输出契约

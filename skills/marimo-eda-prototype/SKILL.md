@@ -39,6 +39,7 @@ allowed-tools: Read, Write, Edit, Bash
 - `references/design-patterns.md`: 高价值 pattern 与反模式
 - `references/eval-fixtures.md`: 样本与评估材料
 - `evals/trigger-cases.md`: 最小触发样例
+- `evals/execution-cases.md`: 关键执行场景
 - `reports/optimization-notes.md`: 本轮重构判断
 
 ## 输出契约

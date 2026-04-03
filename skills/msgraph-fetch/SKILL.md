@@ -36,6 +36,7 @@ description: >
 
 - `references/setup-and-cli.md`: 环境变量、权限、命令示例、缓存布局
 - `evals/trigger-cases.md`: 最小路由样例
+- `evals/execution-cases.md`: 关键执行场景
 - `reports/optimization-notes.md`: 本轮重构判断
 
 ## 输出契约

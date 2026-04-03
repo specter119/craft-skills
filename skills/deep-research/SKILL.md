@@ -40,7 +40,8 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep, WebFetch, WebSearch
 - `references/tools.md`: 各研究阶段的工具选择
 - `references/examples.md`: 端到端示例
 - `references/execution.md`: 工作流、目录逻辑、错误处理、最佳实践
-- `evals/trigger.md`: 最小触发样例
+- `evals/trigger-cases.md`: 最小触发样例
+- `evals/execution-cases.md`: 关键执行场景
 - `assets/report-en.md` / `assets/report-zh.md`: 最终报告模板
 
 ## 输出契约
