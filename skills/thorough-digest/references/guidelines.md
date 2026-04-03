@@ -18,7 +18,7 @@
 ## When to Pass to Another Skill
 - The request requires new internet research or crawling.
 - It focuses on a single document needing a deep dive rather than batch processing.
-- There are no existing local materials to digest (route to `deep-research`).
+- There are no existing local materials to digest, so route to an external research capability.
 
 ## Phases
 ### Phase 1 – Analyze
@@ -35,7 +35,7 @@
 ### Phase 3 – Synthesize
 1. Collect all `findings.md` files created by sub-agents.
 2. Run a gap check: compare processed items against the original inventory.
-3. If gaps appear or context requires external validation, trigger `deep-research` before finalizing.
+3. If gaps appear or context requires external validation, trigger an external research capability before finalizing.
 4. Produce the final synthesis or report using the format in `references/templates.md`.
 
 ## Parallelization Guidelines

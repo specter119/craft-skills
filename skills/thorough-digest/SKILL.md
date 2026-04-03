@@ -30,7 +30,7 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep
 1. 先 inventory 全部输入项，确保范围清楚。
 2. 按 `references/workflow.md` 决定分组方式和并行策略。
 3. 给每个 sub-agent 明确 item list、输出路径和“不许漏项”的约束。
-4. 汇总各组 findings，必要时再串联 `deep-research` 补缺口。
+4. 汇总各组 findings，必要时再串联外部研究类 skill 补缺口。
 
 ## 参考地图
 
@@ -44,3 +44,8 @@ allowed-tools: Task, Read, Write, Edit, Bash, Glob, Grep
 
 - 默认交付 inventory、分组结果、各组 findings 和最终 synthesis
 - 必须能说明总输入数、已处理数和覆盖情况
+
+## 协作与移交
+
+- 若综合阶段发现关键事实缺口，再移交给外部研究类 skill
+- 若材料已消化完、下一步要写正式产物，再移交给写作或演示结构类 skill

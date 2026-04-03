@@ -9,7 +9,7 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 
 # Typst Authoring
 
-负责 **Typst 的技术实现层**，不负责 slides / reports 的叙事设计。
+负责 **Typst 的技术实现层**，不负责内容结构和叙事设计。
 
 ## 适用边界
 
@@ -34,14 +34,18 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 
 ## 参考地图
 
-- `references/workflow.md`: 核心工作流、常用命令、版本管理
-- `references/touying.md`: Touying slides
-- `references/report.md`: Typst 报告实现
-- `references/diagraph.md`: diagram 方案与最佳实践
-- `evals/trigger-cases.md`: 最小触发样例
-- `reports/optimization-notes.md`: 本轮重构判断
+- `references/workflow.md`
+- `references/touying.md`
+- `references/report.md`
+- `references/diagraph.md`
+- `evals/trigger-cases.md`
+- `reports/optimization-notes.md`
 
 ## 输出契约
 
 - 默认给出可编译的 Typst 实现或明确的修复建议
 - 必要时附上应运行的诊断 / 编译命令
+
+## 协作与移交
+
+- 若问题其实是叙事、结构、视觉方向，应移交给相应的内容设计类 skill

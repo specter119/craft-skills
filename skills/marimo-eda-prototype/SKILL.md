@@ -9,20 +9,39 @@ allowed-tools: Read, Write, Edit, Bash
 
 # Marimo EDA Prototype
 
-## Boundary Snapshot
-- Focus on prototype-focused EDA: static analysis cells first, UI only when it accelerates insight, and helper extraction once patterns stabilize.
-- Avoid turning notebooks into scattered UI development or exposing temporary names beyond their local cells.
-- See `references/boundary.md` for the guardrails, decision table, knowledge activation model, and self-check checklist.
+负责 **prototype-first 的 marimo notebook**，不负责把 notebook 做成重交互产品。
 
-## Execution Skeleton
-1. Clarify the analysis job, signals worth surfacing, and hypotheses in the first few cells.
-2. Load data and perform cleaning/transformation cells that can be read end-to-end.
-3. Build the core EDA cells, keeping control, computation, and output close together.
-4. Introduce interactive widgets only when they reduce iteration time; keep widget cells thin and co-located with their logic.
-5. Once a pattern stabilizes or cross-notebook reuse appears, wire to helper modules instead of growing notebook-local UI.
-6. Run optional checkers (`uvx marimo check`, `python scripts/marimo_lint.py ...`) if the notebook grows beyond a first pass, and review the self-check list in the boundary reference.
+## 适用边界
 
-## Reference Map
-- `references/boundary.md` – full boundary discussion, guardrails, decision table, sample rewrites, and optional checker guidance.
-- `references/design-patterns.md` – curated design patterns and GitHub notebook examples that embody the target behavior.
-- `references/eval-fixtures.md` – sample prompts for evaluating routing and execution quality.
+### 应该路由到这里
+
+- 创建或修改 marimo notebook 做 EDA / 原型分析
+- 优化 notebook 的 cell cohesion、交互密度和 module 边界
+- 判断某段 notebook 逻辑是否应该抽到 helper / module
+
+### 不应该路由到这里
+
+- 完整前端应用或长期 UI 产品
+- 一般 Python 脚本开发
+- 纯 API 查询而不涉及 notebook 结构判断
+
+## 执行骨架
+
+1. 先确认 notebook 的主任务仍是分析，而不是 UI 编排。
+2. 按 `references/workflow.md` 先写静态分析版本，再决定是否加入少量交互。
+3. 用 `references/boundary.md` 和 `references/design-patterns.md` 判断 cell cohesion、graph hygiene 和 extraction signal。
+4. 需要技术检查时优先跑 `uvx marimo check`，`scripts/marimo_lint.py` 只做弱信号辅助。
+
+## 参考地图
+
+- `references/boundary.md`: 边界、护栏、决策表、示例
+- `references/workflow.md`: 默认工作流、guardrails、完成前自检
+- `references/design-patterns.md`: 高价值 pattern 与反模式
+- `references/eval-fixtures.md`: 样本与评估材料
+- `evals/trigger-cases.md`: 最小触发样例
+- `reports/optimization-notes.md`: 本轮重构判断
+
+## 输出契约
+
+- 默认产出分析优先、交互克制、结构清楚的 marimo notebook
+- 若发现 notebook 正在演化成 app，应明确提出抽 module 或转产品代码的建议

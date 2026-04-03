@@ -34,7 +34,7 @@
 
 1. Collect 全部 findings
 2. 检查是否有漏项或缺口
-3. 需要时触发 `deep-research`
+3. 需要时触发外部研究类 skill
 4. 输出综合报告
 
 ## 分组策略

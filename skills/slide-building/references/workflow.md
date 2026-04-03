@@ -14,8 +14,8 @@
 
 如果关键材料不足，先补：
 
-- 新主题调研：`deep-research`
-- 已有材料消化：`thorough-digest`
+- 新主题调研：研究类 skill
+- 已有材料消化：批量消化类 skill
 
 ## 2. 大纲设计
 
