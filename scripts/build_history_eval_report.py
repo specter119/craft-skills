@@ -48,7 +48,8 @@ SKILL_PATTERNS = {
         r"exploratory notebook",
         r"prototype-first notebook",
     ],
-    "msgraph-fetch": [
+    "msgraph-explore": [
+        r"\bmsgraph-explore\b",
         r"\bmsgraph-fetch\b",
         r"microsoft graph",
         r"sharepoint",

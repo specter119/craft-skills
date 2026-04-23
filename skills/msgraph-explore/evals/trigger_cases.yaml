@@ -1,4 +1,4 @@
-# Trigger evaluation cases for msgraph-fetch skill routing.
+# Trigger evaluation cases for msgraph-explore skill routing.
 # These help distinguish when to route to this skill vs. other skills.
 
 version: 1

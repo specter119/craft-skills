@@ -90,7 +90,7 @@ uv run skills/msgraph-explore/scripts/msgraph_fetch.py fetch-onenote \
 ## 缓存布局
 
 ```plain
-~/.cache/msgraph-fetch/
+~/.cache/msgraph-explore/
 sources/
   drive/
   onenote/

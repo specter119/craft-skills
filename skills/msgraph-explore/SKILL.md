@@ -1,5 +1,5 @@
 ---
-name: msgraph-fetch
+name: msgraph-explore
 description: >
   Unified Microsoft Graph skill for SharePoint, OneDrive, and OneNote.
   Supports content search via Graph Search API, SharePoint file fetch,
@@ -114,7 +114,7 @@ uv run skills/msgraph-explore/scripts/msgraph_fetch.py fetch-file \
 不传 `--output-dir` 时，默认写到：
 
 ```plain
-~/.cache/msgraph-fetch/materialized/files/
+~/.cache/msgraph-explore/materialized/files/
 ```
 
 成功时 `stdout` 最后一行只输出最终本地绝对路径。
@@ -189,9 +189,9 @@ uv run skills/msgraph-explore/scripts/msgraph_fetch.py fetch-onenote \
 
 - `fetch-onenote` 是从 Graph 单向抓取到本地 Markdown
 
-### Backward Compatibility
+### CLI Entry Point
 
-CLI 仍使用 `scripts/msgraph_fetch.py` 作为主入口；旧 skill 名 `msgraph-fetch` 也保留用于兼容现有触发词与历史会话：
+统一使用 `scripts/msgraph_fetch.py` 作为取数入口：
 
 ```bash
 uv run skills/msgraph-explore/scripts/msgraph_fetch.py fetch-file --url "..."
@@ -202,7 +202,7 @@ uv run skills/msgraph-explore/scripts/msgraph_fetch.py fetch-file --url "..."
 统一使用：
 
 ```plain
-~/.cache/msgraph-fetch/
+~/.cache/msgraph-explore/
 ```
 
 缓存按资源分层：

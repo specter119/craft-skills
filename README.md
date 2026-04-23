@@ -61,7 +61,7 @@ uv run scripts/build_history_eval_report.py --global-history
 | **typst-authoring** | Typst authoring foundation layer | Used by slide-building/report-building |
 | **genimg** | Generate images for content | "生成图片", "配图" |
 | **marimo-eda-prototype** | Write EDA-first marimo notebooks with restrained UI and clear extraction boundaries | "marimo", "EDA notebook", "prototype-first" |
-| **msgraph-fetch** | Search, fetch, and sync Microsoft Graph content for SharePoint, OneDrive, and OneNote | "搜索 SharePoint", "拉 SharePoint 文件", "同步 OneDrive", "拉取 onenote" |
+| **msgraph-explore** | Search, fetch, and sync Microsoft Graph content for SharePoint, OneDrive, and OneNote | "搜索 SharePoint", "拉 SharePoint 文件", "同步 OneDrive", "拉取 onenote" |
 
 ## Usage
 

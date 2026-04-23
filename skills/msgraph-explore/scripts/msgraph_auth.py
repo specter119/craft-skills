@@ -1,5 +1,5 @@
 """
-Shared authentication and Graph API client for msgraph-fetch scripts.
+Shared authentication and Graph API client for msgraph-explore scripts.
 
 This module is imported by fetch.py and search.py — it is not a standalone script.
 """
@@ -20,7 +20,7 @@ GRAPH_BASE = "https://graph.microsoft.com/v1.0"
 NOTES_SCOPES = ("Notes.Read.All", "Sites.Read.All")
 DRIVE_SCOPES = ("Files.Read.All", "Sites.Read.All")
 SEARCH_SCOPES = ("Sites.Read.All", "Files.Read.All")
-CACHE_ROOT = Path.home() / ".cache" / "msgraph-fetch"
+CACHE_ROOT = Path.home() / ".cache" / "msgraph-explore"
 DEFAULT_ENV_PATH = Path(__file__).resolve().parents[1] / ".env"
 
 
