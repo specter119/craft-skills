@@ -1,131 +1,51 @@
 ---
 name: typst-authoring
 description: >
-  Provides Typst technical foundation: syntax reference, toolchain commands, package management,
-  and diagram solution selection (diagraph/D2/oxdraw).
-  Use when working with Typst documents, compiling .typ files, or needing Typst syntax help.
+  Provide Typst technical guidance for writing, compiling, and debugging Typst documents,
+  including package selection and diagram solution choice. USE FOR: Typst syntax, compilation,
+  debugging, Touying slide implementation, report typesetting, diagram rendering in Typst.
+  DO NOT USE FOR: slide narrative/visual design, report content structure, illustration generation.
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
-# Typst
+# Typst Authoring
 
-Technical foundation for Typst document generation. For narrative and design guidance, refer to `slide-building` or `report-building` skills.
+Responsible for **Typst's technical implementation layer**; does not handle content structure or narrative design.
 
-## Workflow
+## USE FOR
 
-```plain
-1. Write Typst code
-2. Run tinymist diagnostics → check for errors
-3. If errors → use tinymist hover to check API signatures → fix → repeat step 2
-4. No errors → typst compile to generate PDF
-5. Verify output with pdfinfo (page count) and pdftoppm (visual check)
-```
+- Typst syntax, compilation, and debugging
+- Technical implementation of Touying slides
+- Report templates, typesetting, and export
+- Selecting and implementing diagram solutions in Typst
 
-## Document Type Routing
+## DO NOT USE FOR
 
-| Document Type | Reference File | Content |
-|---------------|----------------|---------|
-| Slides | `references/touying.md` | Touying framework, animations, themes, page validation |
-| Reports | `references/report.md` | Report templates, academic formatting |
-| Diagrams | `references/diagraph.md` | Diagraph best practices (slides vs reports scenarios) |
+- Narrative arc and visual direction of slides
+- Argument structure and content framework of reports
+- Illustration generation
 
-## Core Tools
+## Execution Skeleton
 
-### Compilation Commands
+1. Follow [workflow](references/workflow.md) through the diagnostics → compile → output check loop.
+2. Then branch by document type: slides → [touying](references/touying.md), reports → [report](references/report.md), diagrams → [diagraph](references/diagraph.md).
+3. When package versions are uncertain, consult the latest documentation; do not rely on hard-coded old version numbers.
 
-```bash
-typst compile input.typ output.pdf      # Compile to PDF
-typst watch input.typ output.pdf        # Watch mode (auto-recompile)
-typst init @preview/package-name name   # Initialize from template
-typst compile --format png input.typ output-{0p}.png  # Export PNG
-```
+## Reference Map
 
-### tinymist LSP-MCP Tools (Prefer These)
+- [workflow](references/workflow.md)
+- [touying](references/touying.md)
+- [report](references/report.md)
+- [diagraph](references/diagraph.md)
+- [trigger-cases](evals/trigger-cases.md)
+- [execution-cases](evals/execution-cases.md)
+- [optimization-notes](reports/optimization-notes.md)
 
-| Tool | Purpose | When to Use |
-|------|---------|-------------|
-| `mcp__tinymist__diagnostics` | Syntax check, error location | After writing code, before compile |
-| `mcp__tinymist__hover` | Function signatures, types | When API is uncertain |
-| `mcp__tinymist__definition` | Jump to definition | To understand package/function implementation |
+## Output Contract
 
-## Package Version Management
+- Default output: compilable Typst implementation or clear fix recommendations
+- Attach relevant diagnostic/compile commands when necessary
 
-Typst requires fixed version numbers. Query latest versions before generating code.
+## Collaboration and Handoff
 
-**Primary method**: Use Context7 MCP
-
-```plain
-1. mcp__context7__resolve-library-id → find package ID
-2. mcp__context7__get-library-docs → get latest version and docs
-```
-
-**Fallback versions** (as of 2025-12, may be outdated):
-
-| Package | Version | Purpose |
-|---------|---------|---------|
-| touying | 0.6.1 | Slide framework |
-| diagraph | 0.3.6 | Graphviz diagrams |
-| oxdraw | 0.1.0 | Mermaid diagrams |
-| cetz | 0.3.4 | General drawing |
-| tablem | 0.3.0 | Markdown tables |
-
-## Diagram Solution Selection
-
-**Default: diagraph > D2 > oxdraw** (see `references/diagraph.md` for scene-specific practices)
-
-| Scenario | Tool | Reason |
-|----------|------|--------|
-| Simple flowchart | diagraph | Native Typst, `labels` for Chinese/math |
-| Nested containers | D2 | Better subgraph layout |
-| Sequence/Gantt/Pie | oxdraw | Mermaid-unique types |
-
-### Quick Examples
-
-```typst
-// diagraph (preferred)
-#import "@preview/diagraph:0.3.6": *
-#render(width: 80%, "digraph { A -> B }", labels: (A: [Start], B: [End]))
-
-// D2 (for architecture)
-#figure(image("arch.svg", width: 80%), caption: [Architecture])
-
-// oxdraw (for Gantt/Sequence only)
-#import "@preview/oxdraw:0.1.0": *
-#oxdraw(```mermaid
-gantt
-    Task A :a1, 2024-01-01, 30d
-```)
-```
-
-## Tables
-
-### Native Typst Table (Recommended)
-
-```typst
-#table(
-  columns: (auto, 1fr, 1fr),
-  stroke: (x, y) => if y == 0 { (bottom: 1pt) },
-  [*Col 1*], [*Col 2*], [*Col 3*],
-  [Data 1], [Data 2], [Data 3],
-)
-```
-
-### tablem (Markdown Style)
-
-```typst
-#import "@preview/tablem:0.3.0": tablem
-
-#tablem[
-  | *Name* | *Age* |
-  | :--- | :---: |
-  | Alice | 25 |
-]
-```
-
-## Error Handling
-
-| Error | Common Cause | Solution |
-|-------|--------------|----------|
-| `unknown package` | Wrong package name/version | Check typst.app/universe |
-| `expected X, found Y` | Syntax error | Check bracket matching, commas |
-| `cannot find font` | Missing font | Use `--font-path` |
+- If the issue is actually narrative, structure, or visual direction, hand off to the appropriate content-design skill

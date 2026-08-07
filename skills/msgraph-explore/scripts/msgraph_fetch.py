@@ -2,15 +2,16 @@
 # requires-python = ">=3.11"
 # dependencies = [
 #     "beautifulsoup4",
-#     "httpx",
+#     "httpxyz",
 #     "markdownify",
+#     "markitdown[docx,pptx,xlsx,pdf]",
 #     "msal",
 #     "orjson",
 #     "python-dotenv",
 # ]
 # ///
 """
-Unified Microsoft Graph fetcher for SharePoint, OneDrive, and OneNote.
+Fetch and sync content from SharePoint, OneDrive, and OneNote via Microsoft Graph.
 """
 
 from __future__ import annotations
@@ -20,23 +21,44 @@ import hashlib
 import re
 import sys
 import time
-from functools import cache
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote, unquote, urlsplit
 
-import httpx
 import orjson
-from dotenv import dotenv_values
 from markdownify import markdownify
-from msal import PublicClientApplication
 
-GRAPH_BASE = "https://graph.microsoft.com/v1.0"
-NOTES_SCOPES = ("Notes.Read.All", "Sites.Read.All")
-DRIVE_SCOPES = ("Files.Read.All", "Sites.Read.All")
-CACHE_ROOT = Path.home() / ".cache" / "msgraph-fetch"
+from msgraph_auth import (
+    CACHE_ROOT,
+    DEFAULT_ENV_PATH,
+    DRIVE_SCOPES,
+    NOTES_SCOPES,
+    AuthError,
+    GraphApiError,
+    GraphClient,
+)
+
 DEFAULT_FETCH_OUTPUT_DIR = CACHE_ROOT / "materialized" / "files"
-DEFAULT_ENV_PATH = Path(__file__).resolve().parents[1] / ".env"
+
+_CONVERTIBLE_EXTS = frozenset(
+    {".docx", ".pptx", ".xlsx", ".xls", ".pdf", ".html", ".htm"}
+)
+
+
+def _convert_to_markdown(source_path: Path) -> Path | None:
+    if source_path.suffix.lower() not in _CONVERTIBLE_EXTS:
+        return None
+    try:
+        from markitdown import MarkItDown
+
+        md = MarkItDown()
+        result = md.convert(str(source_path))
+        md_path = source_path.with_suffix(source_path.suffix + ".md")
+        md_path.write_text(result.text_content, encoding="utf-8")
+        return md_path
+    except Exception as exc:  # noqa: BLE001
+        print(f"warning: markdown conversion failed for {source_path.name}: {exc}")
+        return None
 
 
 def _slugify(value: str) -> str:
@@ -88,121 +110,6 @@ def _encode_graph_path(path: str) -> str:
     if not stripped:
         return ""
     return quote(stripped, safe="/!$&'()*+,;=:@")
-
-
-def _update_env_refresh_token(env_path: Path, new_token: str) -> None:
-    if not env_path.exists():
-        return
-
-    lines = env_path.read_text(encoding="utf-8").splitlines(keepends=True)
-    found = False
-    with env_path.open("w", encoding="utf-8") as handle:
-        for line in lines:
-            if line.startswith("MICROSOFT_REFRESH_TOKEN="):
-                handle.write(f"MICROSOFT_REFRESH_TOKEN={new_token}\n")
-                found = True
-            else:
-                handle.write(line)
-        if not found:
-            if lines and not lines[-1].endswith("\n"):
-                handle.write("\n")
-            handle.write(f"MICROSOFT_REFRESH_TOKEN={new_token}\n")
-
-
-@cache
-def _get_msal_app(
-    client_id: str, authority: str, scope_key: tuple[str, ...]
-) -> PublicClientApplication:
-    del scope_key
-    return PublicClientApplication(client_id, authority=authority)
-
-
-def _get_access_token(env_path: Path, scopes: tuple[str, ...]) -> str:
-    config = dotenv_values(env_path)
-    client_id = config.get("MICROSOFT_CLIENT_ID", "")
-    authority = config.get("MICROSOFT_AUTHORITY", "")
-    if not client_id or not authority:
-        raise ValueError(
-            f"Missing MICROSOFT_CLIENT_ID or MICROSOFT_AUTHORITY in {env_path}"
-        )
-
-    app = _get_msal_app(client_id, authority, scopes)
-    refresh_token = config.get("MICROSOFT_REFRESH_TOKEN")
-    if refresh_token:
-        result = app.acquire_token_by_refresh_token(refresh_token, scopes=list(scopes))
-        if "access_token" in result:
-            if "refresh_token" in result:
-                _update_env_refresh_token(env_path, result["refresh_token"])
-            return result["access_token"]
-
-    result = app.acquire_token_interactive(scopes=list(scopes))
-    if "access_token" not in result:
-        raise ValueError(f"Authentication failed: {result.get('error_description')}")
-    if "refresh_token" in result:
-        _update_env_refresh_token(env_path, result["refresh_token"])
-    return result["access_token"]
-
-
-class GraphClient:
-    def __init__(self, env_path: str | Path | None, scopes: tuple[str, ...]):
-        self.env_path = Path(env_path) if env_path else DEFAULT_ENV_PATH
-        self.scopes = scopes
-        self._headers: dict[str, str] | None = None
-
-    @property
-    def headers(self) -> dict[str, str]:
-        if self._headers is None:
-            token = _get_access_token(self.env_path, self.scopes)
-            self._headers = {"Authorization": f"Bearer {token}"}
-        return self._headers
-
-    def _request(
-        self,
-        method: str,
-        path: str,
-        *,
-        params: dict[str, Any] | None = None,
-        timeout: int = 30,
-        follow_redirects: bool = False,
-    ) -> httpx.Response:
-        url = f"{GRAPH_BASE}{path}" if path.startswith("/") else path
-        response = httpx.request(
-            method,
-            url,
-            headers=self.headers,
-            params=params,
-            timeout=timeout,
-            follow_redirects=follow_redirects,
-        )
-        response.raise_for_status()
-        return response
-
-    def get_json(
-        self, path: str, *, params: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
-        return self._request("GET", path, params=params).json()
-
-    def get_all(
-        self, path: str, *, params: dict[str, Any] | None = None
-    ) -> list[dict[str, Any]]:
-        results: list[dict[str, Any]] = []
-        next_url: str | None = f"{GRAPH_BASE}{path}" if path.startswith("/") else path
-        next_params = params
-        while next_url:
-            response = self._request("GET", next_url, params=next_params)
-            payload = response.json()
-            results.extend(payload.get("value", []))
-            next_url = payload.get("@odata.nextLink")
-            next_params = None
-        return results
-
-    def get_text(self, path: str, *, timeout: int = 60) -> str:
-        return self._request("GET", path, timeout=timeout).text
-
-    def get_bytes(self, path: str, *, timeout: int = 60) -> bytes:
-        return self._request(
-            "GET", path, timeout=timeout, follow_redirects=True
-        ).content
 
 
 def _preprocess_onenote_html(html: str) -> str:
@@ -513,13 +420,18 @@ class DriveClient:
         return local_path, cache_hit
 
     def _parse_sharepoint_file_url(self, url: str) -> tuple[str, str]:
-        decoded_url = unquote(url)
-        site_match = re.search(r"sharepoint\.com(?:/:\w:/\w)?/sites/([^/]+)", decoded_url)
-        file_match = re.search(r"/Shared Documents/(.+?)(?:\?|$)", decoded_url)
-        if not site_match or not file_match:
-            raise ValueError(f"Cannot parse SharePoint file URL: {url}")
-        site_name = site_match.group(1)
-        file_path = file_match.group(1)
+        parsed = urlsplit(unquote(url))
+        parts = parsed.path.strip("/").split("/")
+        try:
+            idx = parts.index("sites")
+            site_name = parts[idx + 1]
+        except (ValueError, IndexError):
+            raise ValueError(f"Cannot find site name in URL: {url}")
+        marker = "Shared Documents/"
+        pos = parsed.path.find(marker)
+        if pos < 0:
+            raise ValueError(f"Cannot find 'Shared Documents' path in URL: {url}")
+        file_path = parsed.path[pos + len(marker):]
         return site_name, file_path
 
     def fetch_file(self, url: str, output_dir: str | Path | None = None) -> Path:
@@ -530,6 +442,22 @@ class DriveClient:
         item = self.graph.get_json(f"/drives/{drive_id}/root:/{encoded_path}")
         filename = item.get("name", Path(urlsplit(url).path).name or "download")
         materialized_dir = Path(output_dir) if output_dir is not None else DEFAULT_FETCH_OUTPUT_DIR
+        output_path = materialized_dir / filename
+        local_path, _ = self._download_item_if_needed(drive_id, item, output_path)
+        return local_path
+
+    def fetch_by_ids(
+        self, drive_id: str, item_id: str, output_dir: str | Path | None = None
+    ) -> Path:
+        item = self.graph.get_json(f"/drives/{drive_id}/items/{item_id}")
+        if "file" not in item:
+            raise ValueError(
+                f"Item {item_id} is not a file (name={item.get('name', '?')})"
+            )
+        filename = item.get("name", "download")
+        materialized_dir = (
+            Path(output_dir) if output_dir is not None else DEFAULT_FETCH_OUTPUT_DIR
+        )
         output_path = materialized_dir / filename
         local_path, _ = self._download_item_if_needed(drive_id, item, output_path)
         return local_path
@@ -585,6 +513,157 @@ class DriveClient:
         return written
 
 
+class WikiPageClient:
+    """Fetch SharePoint wiki/publishing pages via Graph API."""
+
+    _CONTENT_FIELDS = ("PublishingPageContent", "WikiField", "CanvasContent1")
+
+    def __init__(self, env_path: str | Path | None = None):
+        self.graph = GraphClient(env_path, DRIVE_SCOPES)
+
+    def find_pages_drive(self, site_id: str) -> str:
+        """Find the Pages library drive ID for a site."""
+        lists = self.graph.get_all(
+            f"/sites/{site_id}/lists",
+            params={"$select": "id,displayName,list,drive"},
+        )
+        for lst in lists:
+            template = lst.get("list", {}).get("template", "")
+            name = lst.get("displayName", "")
+            if template == "850" or name.lower() in ("pages", "site pages"):
+                drives = self.graph.get_all(f"/sites/{site_id}/drives")
+                for d in drives:
+                    if d.get("name", "").lower() == name.lower():
+                        return d["id"]
+                raise ValueError(
+                    f"Found Pages list '{name}' but no matching drive on site {site_id}"
+                )
+        raise ValueError(f"No Pages library found on site {site_id}")
+
+    def search_pages(
+        self,
+        drive_id: str,
+        query: str,
+        *,
+        max_results: int = 10,
+    ) -> list[dict[str, Any]]:
+        """Search the Pages drive for wiki pages matching a query."""
+        items = self.graph.get_json(
+            f"/drives/{drive_id}/root/search(q='{query}')",
+            params={"$top": str(max_results)},
+        )
+        results = []
+        for item in items.get("value", []):
+            name = item.get("name", "")
+            if not name.lower().endswith(".aspx"):
+                continue
+            results.append(
+                {
+                    "name": name,
+                    "id": item["id"],
+                    "size": item.get("size", 0),
+                    "webUrl": item.get("webUrl", ""),
+                }
+            )
+        return results
+
+    def _extract_content_from_fields(
+        self, fields: dict[str, Any]
+    ) -> tuple[str, str] | None:
+        """Extract wiki content from list item fields. Returns (field_name, html)."""
+        import html as html_mod
+
+        for field_name in self._CONTENT_FIELDS:
+            raw = fields.get(field_name, "")
+            if raw:
+                content = html_mod.unescape(html_mod.unescape(raw))
+                return field_name, content
+        return None
+
+    def _extract_content_from_aspx(self, aspx_text: str) -> tuple[str, str] | None:
+        """Fallback: extract content from raw .aspx file XML metadata."""
+        import html as html_mod
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(aspx_text, "html.parser")
+        for field_name in self._CONTENT_FIELDS:
+            # html.parser lowercases tags: <mso:PublishingPageContent> → mso:publishingpagecontent
+            tag = soup.find(f"mso:{field_name.lower()}")
+            if tag:
+                raw = tag.decode_contents()
+                if raw.strip():
+                    content = html_mod.unescape(html_mod.unescape(raw))
+                    return field_name, content
+        return None
+
+    def fetch_page_content(
+        self, drive_id: str, item_id: str
+    ) -> tuple[str, str, str]:
+        """Fetch a single wiki page content. Returns (title, markdown, source_field)."""
+        item = self.graph.get_json(
+            f"/drives/{drive_id}/items/{item_id}",
+            params={"$expand": "listItem($expand=fields)"},
+        )
+        filename = item.get("name", "page.aspx")
+        title = filename.replace(".aspx", "").replace("_", " ")
+
+        list_item = item.get("listItem", {})
+        fields = list_item.get("fields", {})
+
+        if fields.get("Title"):
+            title = fields["Title"]
+
+        result = self._extract_content_from_fields(fields)
+
+        if not result:
+            aspx_text = self.graph.get_text(
+                f"/drives/{drive_id}/items/{item_id}/content", timeout=120
+            )
+            result = self._extract_content_from_aspx(aspx_text)
+
+        if not result:
+            raise ValueError(
+                f"No wiki content found in {filename}. "
+                f"Available fields: {list(fields.keys())[:15]}"
+            )
+
+        field_name, html_content = result
+        md = markdownify(html_content, heading_style="ATX", strip=["script", "style"])
+        md = re.sub(r"\n{4,}", "\n\n\n", md)
+        md = re.sub(r"[ \t]+\n", "\n", md)
+        full_md = f"# {title}\n\n*Source: SharePoint Wiki*\n\n{md.strip()}"
+        return title, full_md, field_name
+
+    def search_and_fetch(
+        self,
+        site_id: str,
+        query: str,
+        output_dir: str | Path,
+        *,
+        max_results: int = 10,
+    ) -> list[Path]:
+        """Search for wiki pages and fetch all matches."""
+        drive_id = self.find_pages_drive(site_id)
+        pages = self.search_pages(drive_id, query, max_results=max_results)
+        out = Path(output_dir)
+        out.mkdir(parents=True, exist_ok=True)
+        results: list[Path] = []
+
+        for page in pages:
+            safe_name = _sanitize_filename(page["name"])
+            target = out / f"{safe_name}.md"
+            try:
+                title, md_content, field = self.fetch_page_content(
+                    drive_id, page["id"]
+                )
+                target.write_text(md_content, encoding="utf-8")
+                print(f"✅ {safe_name} ({len(md_content)} chars, via {field})")
+                results.append(target)
+            except Exception as exc:  # noqa: BLE001
+                print(f"⚠️  {safe_name}: {exc}")
+
+        return results
+
+
 def _require_site_identifier(site_id: str | None, site_search: str | None) -> str:
     if not site_id and not site_search:
         raise ValueError("Provide either --site-id or --site-search")
@@ -603,7 +682,9 @@ def _build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     fetch_file = subparsers.add_parser("fetch-file", help="Fetch a SharePoint file")
-    fetch_file.add_argument("--url", required=True, help="SharePoint file URL")
+    fetch_file.add_argument("--url", default=None, help="SharePoint file URL")
+    fetch_file.add_argument("--drive-id", default=None, help="Graph drive ID (use with --item-id)")
+    fetch_file.add_argument("--item-id", default=None, help="Graph item ID (use with --drive-id)")
     fetch_file.add_argument(
         "--output-dir",
         default=None,
@@ -612,6 +693,12 @@ def _build_parser() -> argparse.ArgumentParser:
             f"(default: {DEFAULT_FETCH_OUTPUT_DIR})"
         ),
     )
+    fetch_file.add_argument(
+        "--convert",
+        action="store_true",
+        help="Convert binary files (docx/pptx/xlsx/pdf) to Markdown",
+    )
+    fetch_file.set_defaults(handler=_handle_fetch_file)
 
     sync_folder = subparsers.add_parser("sync-folder", help="Sync a drive folder")
     sync_folder.add_argument("--remote-path", required=True, help="Remote folder path")
@@ -619,20 +706,30 @@ def _build_parser() -> argparse.ArgumentParser:
     sync_folder.add_argument("--site-id", default=None)
     sync_folder.add_argument("--site-search", default=None)
     sync_folder.add_argument("--force", action="store_true")
+    sync_folder.add_argument(
+        "--convert",
+        action="store_true",
+        help="Convert binary files to Markdown after download",
+    )
+    sync_folder.set_defaults(handler=_handle_sync_folder)
 
     list_sites = subparsers.add_parser("list-sites", help="Search SharePoint sites")
     list_sites.add_argument("search", help="Search keyword")
+    list_sites.set_defaults(handler=_handle_list_sites)
 
     list_notebooks = subparsers.add_parser("list-notebooks", help="List notebooks")
     list_notebooks.add_argument("--site-id", required=True)
+    list_notebooks.set_defaults(handler=_handle_list_notebooks)
 
     list_sections = subparsers.add_parser("list-sections", help="List sections")
     list_sections.add_argument("--site-id", required=True)
     list_sections.add_argument("--notebook-id", required=True)
+    list_sections.set_defaults(handler=_handle_list_sections)
 
     list_pages = subparsers.add_parser("list-pages", help="List pages")
     list_pages.add_argument("--site-id", required=True)
     list_pages.add_argument("--section-id", default=None)
+    list_pages.set_defaults(handler=_handle_list_pages)
 
     fetch_page = subparsers.add_parser(
         "fetch-onenote-page",
@@ -640,6 +737,36 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     fetch_page.add_argument("--site-id", required=True)
     fetch_page.add_argument("--page-id", required=True)
+    fetch_page.set_defaults(handler=_handle_fetch_onenote_page)
+
+    search_pages = subparsers.add_parser(
+        "search-pages", help="Search SharePoint wiki pages"
+    )
+    search_pages.add_argument("--site-id", required=True, help="SharePoint site ID")
+    search_pages.add_argument("--query", required=True, help="Search query")
+    search_pages.add_argument("--max-results", type=int, default=10)
+    search_pages.set_defaults(handler=_handle_search_pages)
+
+    fetch_wiki_page = subparsers.add_parser(
+        "fetch-page", help="Fetch SharePoint wiki page as Markdown"
+    )
+    fetch_wiki_page.add_argument(
+        "--site-id", default=None, help="SharePoint site ID (with --query)"
+    )
+    fetch_wiki_page.add_argument(
+        "--query", default=None, help="Search query (with --site-id)"
+    )
+    fetch_wiki_page.add_argument(
+        "--drive-id", default=None, help="Pages drive ID (with --item-id)"
+    )
+    fetch_wiki_page.add_argument(
+        "--item-id", default=None, help="Drive item ID (with --drive-id)"
+    )
+    fetch_wiki_page.add_argument(
+        "--output-dir", required=True, help="Output directory for markdown files"
+    )
+    fetch_wiki_page.add_argument("--max-results", type=int, default=10)
+    fetch_wiki_page.set_defaults(handler=_handle_fetch_page)
 
     fetch_onenote = subparsers.add_parser(
         "fetch-onenote",
@@ -650,92 +777,154 @@ def _build_parser() -> argparse.ArgumentParser:
     fetch_onenote.add_argument("--output-dir", required=True)
     fetch_onenote.add_argument("--notebook-id", default=None)
     fetch_onenote.add_argument("--section-id", default=None)
+    fetch_onenote.set_defaults(handler=_handle_fetch_onenote)
 
     return parser
+
+
+def _handle_fetch_file(args: argparse.Namespace) -> int:
+    client = DriveClient(env_path=args.env)
+    if args.drive_id and args.item_id:
+        local_path = client.fetch_by_ids(args.drive_id, args.item_id, args.output_dir)
+    elif args.url:
+        local_path = client.fetch_file(args.url, args.output_dir)
+    else:
+        raise ValueError("Provide either --url or both --drive-id and --item-id")
+    print(local_path)
+    if args.convert:
+        md_path = _convert_to_markdown(local_path)
+        if md_path:
+            print(md_path)
+    return 0
+
+
+def _handle_sync_folder(args: argparse.Namespace) -> int:
+    client = DriveClient(env_path=args.env)
+    written = client.sync_folder(
+        args.remote_path,
+        args.output_dir,
+        site_id=args.site_id,
+        site_search=args.site_search,
+        force=args.force,
+    )
+    if args.convert:
+        for path in written:
+            md_path = _convert_to_markdown(path)
+            if md_path:
+                print(f"convert {path.name} -> {md_path.name}")
+    return 0
+
+
+def _handle_list_sites(args: argparse.Namespace) -> int:
+    client = OneNoteClient(env_path=args.env)
+    sites = client.list_sites(args.search)
+    for site in sites:
+        print(f"{site.get('displayName', '?'):<30} {site['id']}")
+    return 0
+
+
+def _handle_list_notebooks(args: argparse.Namespace) -> int:
+    client = OneNoteClient(env_path=args.env)
+    notebooks = client.list_notebooks(args.site_id)
+    for notebook in notebooks:
+        print(f"{notebook.get('displayName', '?'):<30} {notebook['id']}")
+    return 0
+
+
+def _handle_list_sections(args: argparse.Namespace) -> int:
+    client = OneNoteClient(env_path=args.env)
+    sections = client.list_sections(args.site_id, args.notebook_id)
+    for section in sections:
+        print(f"{section.get('displayName', '?'):<30} {section['id']}")
+    return 0
+
+
+def _handle_list_pages(args: argparse.Namespace) -> int:
+    client = OneNoteClient(env_path=args.env)
+    pages = client.list_pages(args.site_id, section_id=args.section_id)
+    for page in pages:
+        print(f"{page.get('title', '?'):<40} {page['id']}")
+    return 0
+
+
+def _handle_search_pages(args: argparse.Namespace) -> int:
+    client = WikiPageClient(env_path=args.env)
+    drive_id = client.find_pages_drive(args.site_id)
+    print(f"Pages drive: {drive_id}")
+    pages = client.search_pages(drive_id, args.query, max_results=args.max_results)
+    for page in pages:
+        size_kb = page.get("size", 0) / 1024
+        print(f"  {page['name']:<60} {size_kb:>8.1f} KB  id={page['id']}")
+    print(f"\n{len(pages)} page(s) found.")
+    return 0
+
+
+def _handle_fetch_page(args: argparse.Namespace) -> int:
+    client = WikiPageClient(env_path=args.env)
+    if args.site_id and args.query:
+        paths = client.search_and_fetch(
+            args.site_id,
+            args.query,
+            args.output_dir,
+            max_results=args.max_results,
+        )
+        print(f"\n{len(paths)} page(s) fetched.")
+    elif args.drive_id and args.item_id:
+        title, md_content, field = client.fetch_page_content(args.drive_id, args.item_id)
+        out = Path(args.output_dir)
+        out.mkdir(parents=True, exist_ok=True)
+        safe_name = _sanitize_filename(f"{title}.aspx.md")
+        target = out / safe_name
+        target.write_text(md_content, encoding="utf-8")
+        print(f"✅ {target} ({len(md_content)} chars, via {field})")
+    else:
+        raise ValueError("Provide --site-id --query or --drive-id --item-id")
+    return 0
+
+
+def _handle_fetch_onenote_page(args: argparse.Namespace) -> int:
+    client = OneNoteClient(env_path=args.env)
+    markdown = client.fetch_page_markdown(args.site_id, args.page_id)
+    print(markdown)
+    return 0
+
+
+def _handle_fetch_onenote(args: argparse.Namespace) -> int:
+    _require_site_identifier(args.site_id, args.site_search)
+    client = OneNoteClient(env_path=args.env)
+    site_id = args.site_id
+    if args.site_search:
+        sites = client.list_sites(args.site_search)
+        if not sites:
+            raise ValueError(f"No sites found for '{args.site_search}'")
+        site_id = sites[0]["id"]
+        print(f"Using site: {sites[0].get('displayName', site_id)} ({site_id})")
+    if site_id is None:
+        raise ValueError("Provide either --site-id or --site-search")
+    if args.section_id:
+        client.sync_section(site_id, args.section_id, args.output_dir)
+    elif args.notebook_id:
+        client.sync_notebook(site_id, args.notebook_id, args.output_dir)
+    else:
+        client.sync_site(site_id, args.output_dir)
+    return 0
 
 
 def main() -> int:
     parser = _build_parser()
     args = parser.parse_args()
-
+    handler = getattr(args, "handler", None)
+    if handler is None:
+        parser.print_help()
+        return 1
     try:
-        if args.command == "fetch-file":
-            client = DriveClient(env_path=args.env)
-            local_path = client.fetch_file(args.url, args.output_dir)
-            print(local_path)
-            return 0
-
-        if args.command == "sync-folder":
-            client = DriveClient(env_path=args.env)
-            client.sync_folder(
-                args.remote_path,
-                args.output_dir,
-                site_id=args.site_id,
-                site_search=args.site_search,
-                force=args.force,
-            )
-            return 0
-
-        if args.command == "list-sites":
-            client = OneNoteClient(env_path=args.env)
-            sites = client.list_sites(args.search)
-            for site in sites:
-                print(f"{site.get('displayName', '?'):<30} {site['id']}")
-            return 0
-
-        if args.command == "list-notebooks":
-            client = OneNoteClient(env_path=args.env)
-            notebooks = client.list_notebooks(args.site_id)
-            for notebook in notebooks:
-                print(f"{notebook.get('displayName', '?'):<30} {notebook['id']}")
-            return 0
-
-        if args.command == "list-sections":
-            client = OneNoteClient(env_path=args.env)
-            sections = client.list_sections(args.site_id, args.notebook_id)
-            for section in sections:
-                print(f"{section.get('displayName', '?'):<30} {section['id']}")
-            return 0
-
-        if args.command == "list-pages":
-            client = OneNoteClient(env_path=args.env)
-            pages = client.list_pages(args.site_id, section_id=args.section_id)
-            for page in pages:
-                print(f"{page.get('title', '?'):<40} {page['id']}")
-            return 0
-
-        if args.command == "fetch-onenote-page":
-            client = OneNoteClient(env_path=args.env)
-            markdown = client.fetch_page_markdown(args.site_id, args.page_id)
-            print(markdown)
-            return 0
-
-        if args.command == "fetch-onenote":
-            _require_site_identifier(args.site_id, args.site_search)
-            client = OneNoteClient(env_path=args.env)
-            site_id = args.site_id
-            if args.site_search:
-                sites = client.list_sites(args.site_search)
-                if not sites:
-                    raise ValueError(f"No sites found for '{args.site_search}'")
-                site_id = sites[0]["id"]
-                print(f"Using site: {sites[0].get('displayName', site_id)} ({site_id})")
-
-            assert site_id is not None
-            if args.section_id:
-                client.sync_section(site_id, args.section_id, args.output_dir)
-            elif args.notebook_id:
-                client.sync_notebook(site_id, args.notebook_id, args.output_dir)
-            else:
-                client.sync_site(site_id, args.output_dir)
-            return 0
-
-    except Exception as exc:
+        return handler(args)
+    except (AuthError, GraphApiError) as exc:
         print(str(exc), file=sys.stderr)
         return 1
-
-    parser.print_help()
-    return 1
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":

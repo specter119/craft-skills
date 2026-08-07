@@ -22,8 +22,10 @@
       "skills": [
         "./skills/deep-research",
         "./skills/genimg",
+        "./skills/jj",
         "./skills/marimo-eda-prototype",
-        "./skills/msgraph-fetch",
+        "./skills/skill-craft",
+        "./skills/msgraph-explore",
         "./skills/report-building",
         "./skills/slide-building",
         "./skills/thorough-digest",
