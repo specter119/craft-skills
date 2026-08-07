@@ -1,18 +1,141 @@
 # Marimo Notebook Design Patterns
 
-这份文档沉淀当前样本池里值得吸收进 skill 的设计模式。
+This document captures design patterns from the current sample pool that are worth absorbing into the skill.
 
-目标不是罗列 API，而是回答：
+Role: this is evidence and rationale, not the primary execution checklist. Use `workflow.md` for action order, `boundary.md` for guardrails, and `marimo-semantics.md` for marimo graph rules.
 
-- 什么样的 notebook 结构更符合 `EDA / prototype-first`
-- 哪些模式说明 notebook 还在“探索空间”内
-- 哪些模式说明应该开始抽 helper 或 module
+The goal is not to enumerate APIs, but to answer:
 
-## 1. Create Stable Seams Early
+- What notebook structure fits `EDA / prototype-first` better
+- Which patterns indicate the notebook is still within "exploration space"
+- Which patterns indicate it is time to extract a helper or module
+
+## 1. Build Data Intuition Before Testing Hypotheses
 
 ### Pattern
 
-先定义稳定 helper，再在后续 cell 中组合它们：
+Start EDA with low-assumption views before narrow analysis:
+
+1. Show raw rows or a compact schema / missingness overview
+2. Plot distributions with histograms, density-like summaries, or box plots
+3. Plot relationships with scatterplots or small multiples
+4. Name the visible pattern, anomaly, cluster, gap, skew, or outlier
+5. Turn that observation into a question, hypothesis, or candidate interpretation
+6. Add focused validation analysis only after the hypothesis is explicit
+
+### Why it works
+
+- Early charts teach the analyst what the data can plausibly support
+- Hypotheses are either generated from observed structure or explicitly labeled as prior questions
+- Later validation cells have a clear reason to exist
+
+### Example
+
+Source:
+
+- `fsw_unified_desp/00_data_eval.py`
+
+It starts from loaded rows, then shows a target distribution and process-window scatter before adding a richer chart-native view. The interaction helps inspect patterns in the raw process space; it does not begin with a fixed feature decision.
+
+### Skill implication
+
+When creating an EDA notebook, do not jump straight from `load_data()` to a selected model, exclusion, interpretation, or subset. First add enough low-assumption plots for the analyst to form initial data intuition.
+
+## 2. Keep EDA Story Logic Discovery-First
+
+### Pattern
+
+EDA notebooks should preserve the order in which knowledge is earned:
+
+1. Raw rows or compact overview
+2. Unconditioned distribution / scatter / diagnostic
+3. Visible pattern noticed by the analyst
+4. Explicit question, hypothesis, or candidate interpretation
+5. Focused validation
+6. Explicit decision
+7. Derived result or downstream selection
+
+### Why it works
+
+- The reader can see what was knowable before the decision
+- Human judgment is anchored in visible patterns, not hidden assumptions
+- The notebook remains an exploration record instead of a retrospective slide deck
+
+### Contrast
+
+Presentation logic can start with a conclusion and select charts to explain it. That is legitimate
+for reporting, but it is the wrong default for EDA because it hides the discovery path and makes
+the decision look inevitable.
+
+### Skill implication
+
+When refactoring a notebook, preserve the cells that show raw evidence and unconditioned patterns
+before any keep/drop/filter/ranking decision. Do not move the chosen result above the diagnostic
+just because it reads more cleanly as a report.
+
+## 3. Separate Observation From Decision
+
+### Pattern
+
+Close each EDA loop in this order:
+
+1. Build the complete relevant observation set
+2. Render the diagnostic visualization
+3. Record the human decision explicitly
+4. Derive and display the selected result
+
+### Why it works
+
+- The visualization can reveal unexpected patterns instead of confirming a preset result
+- Readers can audit what evidence was available when the decision was made
+- Changing a static decision does not rewrite its own supporting evidence
+
+### Counterexample
+
+A feature-selection decision removes highly correlated variables before the correlation heatmap is
+built. The heatmap then cannot show the pattern used to justify those removals.
+
+### Skill implication
+
+Inspect both source order and reactive dependencies. A later chart must not consume the keep/drop
+result when that chart is the evidence for the same keep/drop decision.
+
+## 4. Prefer Low-State Controls for Reversible Exploration
+
+### Pattern
+
+When human participation is about changing the view, keep the control local and reversible instead of exporting widget state:
+
+1. Show a raw sample or baseline chart first
+2. Build the interactive diagnostic in one local cell
+3. Prefer chart-native selection for in-chart subgroup inspection when it fits
+4. Avoid feeding that selection into downstream cells unless it becomes an explicit decision
+
+### Why it works
+
+- Humans can inspect the evidence deeply without turning the notebook into a stateful app
+- The selection remains reversible and auditable as a viewing lens
+- The marimo dependency graph stays focused on data and primary results
+
+### Example
+
+Source:
+
+- `fsw_unified_desp/00_data_eval.py`
+
+This notebook first shows loaded rows and unconditional charts, then embeds an alloy selector directly in a chart diagnostic. The selected alloy changes the view but is not exported as notebook state or used as a downstream decision.
+
+### Skill implication
+
+Do not equate "human participates a lot" with "add marimo UI". If the interaction is only a visual lens, prefer chart-local interaction. Use `mo.ui` only when it clearly lowers analysis friction; display the widget near the analysis and consume `.value` in the adjacent downstream cell.
+
+The same applies to display composition: `mo.vstack` / `mo.hstack` can keep a local diagnostic bundle together, but using them as default layout polish pushes EDA toward an app-like presentation.
+
+## 5. Name Stable Seams When They Emerge
+
+### Pattern
+
+Once an exploratory pattern has stabilized, give it a stable helper name and compose it in subsequent cells:
 
 - `load_*`
 - `build_*`
@@ -21,287 +144,165 @@
 
 ### Why it works
 
-- notebook 主线更清楚
-- 用户知道应该改哪里来适配自己的数据
-- 后续交互和展示不会直接吞掉分析逻辑
+- The notebook's main thread stays clear after the exploratory shape is known
+- Users know where to make changes to adapt to their own data
+- Subsequent interaction and display do not swallow the analysis logic
 
 ### Example
 
-来源：
+Source:
 
 - `explore_high_dimensional_data.py`
 
-这个 notebook 先定义：
+This notebook first defines:
 
 - `load_data`
 - `embed_data`
 - `scatter_data`
 - `show_selection`
 
-后面才把 embedding、chart、selection drill-down 串起来。
+Only then does it wire together embedding, chart, and selection drill-down.
 
 ### Skill implication
 
-如果你在写一个可以被用户替换数据源、嵌入算法、展示方式的 notebook，优先先定义 seam，再写 orchestration cell。
+Do not start EDA by inventing helpers for guesses that have not survived first-pass inspection. Once the data source, chart skeleton, embedding algorithm, or display style is repeated or clearly stable, name that seam and keep orchestration cells thin.
 
-## 2. Keep UI Cells Thin
+## 6. Keep UI Cells Thin
 
 ### Pattern
 
-UI cell 主要负责：
+A UI cell is primarily responsible for:
 
-- 生成 widget
-- 包装 chart / table / rendered output
-- 读取 `.value`
+- Generating widgets
+- Displaying widgets or a single local bundle
+- Keeping widget `.value` consumption in an adjacent downstream analysis cell
 
-不要在同一个 UI cell 里继续塞大量数据清洗、过滤、状态同步。
+Do not pack large amounts of data cleaning, filtering, or state synchronization into the same UI cell.
 
 ### Why it works
 
-- control 和 analysis 的边界清楚
-- UI 更新更容易追踪
-- notebook 不容易长成 notebook-local component
+- The boundary between control and analysis is clear
+- UI updates are easier to trace
+- The notebook is less likely to grow into a notebook-local component
+- Marimo's rule that widgets are defined in one cell and `.value` is consumed downstream stays visible
 
 ### Example
 
-来源：
+Source:
 
 - `explore_high_dimensional_data.py`
 
-`mo.ui.altair_chart(...)` 和 `mo.ui.table(...)` 分别只承担薄适配角色。
+`mo.ui.altair_chart(...)` and `mo.ui.table(...)` each play only a thin adapter role.
 
 ### Counterexample
 
-来源：
+Source:
 
 - `laurium-prompt_engineering.py`
 
-多个 cell 同时承担：
+Multiple cells simultaneously handle:
 
-- 配置 UI
-- 分阶段 reveal
-- 文案说明
-- 参数 wiring
+- Configuring UI
+- Staged reveal
+- Explanatory copy
+- Parameter wiring
 
-这已经更接近 app flow，而不是轻量原型。
+This is closer to an app flow than a lightweight prototype.
 
-## 3. Close One Exploration Loop Locally
+## 7. Close One Exploration Loop Locally
 
 ### Pattern
 
-一个探索动作的：
+For a single exploration action, keep the:
 
 - control
 - derived result
 - output
 
-尽量保持在相邻 cell，最好局部闭合。
+as close together as possible — ideally closed locally.
 
 ### Why it works
 
-- 降低 `ui-scatter`
-- 读者不需要跨很多 cell 才知道某个控件影响什么
-- 参数试验的反馈路径更短
+- Reduces `ui-scatter`
+- Readers do not need to cross many cells to understand what a widget affects
+- The feedback loop for parameter experimentation is shorter
 
 ### Example
 
-来源：
+Source:
 
 - `explore_high_dimensional_data.py`
 - `interactive-matrices.py`
 
-它们都把“小交互 + 对应输出”放得比较近。
+Both place "small interaction + corresponding output" close together.
 
 ### Counterexample
 
-来源：
+Source:
 
 - `nlp_span_comparison.py`
 
-这个 notebook 本身是好的，但 `index` UI 和实际使用位置偏远，所以 `ui-scatter` 仍然会命中。
+This notebook is good overall, but the `index` UI is placed far from where it is actually used, so `ui-scatter` will still fire.
 
 ### Skill implication
 
-不要把“参数定义”放在 notebook 前面很远，再让多个下游 cell 分散消费。
+Do not place "parameter definitions" far up in the notebook and then let multiple downstream cells consume them in scattered fashion.
 
-## 4. Let the Notebook Orchestrate, Let Modules Own Capability
-
-### Pattern
-
-notebook 负责：
-
-- 用户输入
-- 状态 wiring
-- 分析流程编排
-- 展示组合
-
-module / helper 负责：
-
-- 领域逻辑
-- 可复用算法
-- 图表构建
-- widget 组件
-
-### Why it works
-
-- notebook 保持 prototype-first
-- 稳定能力不会继续膨胀在 notebook 里
-- 可复用边界更清楚
-
-### Example
-
-来源：
-
-- `bennet-meyers-notebook.py`
-
-它已经把一部分能力沉到 `modules/`，而 notebook 保留了 orchestration 和 state wiring。
-
-### Skill implication
-
-当你发现某段逻辑已经可以被命名为“能力”而不是“本次分析步骤”，就该离开 notebook。
-
-## 5. Multi-State Coordination Is an Extraction Signal
+## 8. Extraction Signals
 
 ### Pattern
 
-下面这些通常不是“再坚持一下 notebook 就好”的信号，而是抽模块的信号：
+Mark logic as an extraction candidate when any of these signals are real:
 
-- 多组 `mo.state`
-- 动态 UI collection
-- 参数预填 / 参数同步
-- add/remove controls
-- 同一组 state 被多个 cell 共同维护
-
-### Why it works
-
-这类逻辑通常已经在形成组件协议：
-
-- 输入是什么
-- 内部状态是什么
-- 输出是什么
-
-只是还没被正式提炼。
-
-### Example
-
-来源：
-
-- `bennet-meyers-notebook.py`
-
-它在 problem、component、parameter 之间维护了多组状态，这正是 module boundary 的明确信号。
-
-### Skill implication
-
-当 notebook 开始做 state coordination，不要默认继续长代码；先评估是否该抽到 `widgets.py`、`components.py` 或领域模块。
-
-## 6. Progressive Disclosure Can Help, But It Is Not the Default
-
-### Pattern
-
-`mo.stop(...)`、表单提交后逐段 reveal、阶段性提示，对以下场景有帮助：
-
-- step-by-step workflow
-- 高依赖顺序的配置流
-- 用户容易漏填关键参数
-
-### Why it works
-
-- 可以减少用户在错误状态下继续探索
-- 能把复杂操作拆成更清楚的阶段
-
-### Example
-
-来源：
-
-- `laurium-prompt_engineering.py`
-
-它把 notebook 做成了分阶段流程，适合 prompt engineering workflow。
-
-### Risk
-
-这类模式很容易把 notebook 推成 mini app。
-
-### Skill implication
-
-只在任务本身真的是 workflow / wizard 时用；默认 EDA notebook 不应该一上来就按这个方向长。
-
-## 7. Repeated Presentation Skeletons Mean the Pattern Is Stabilizing
-
-### Pattern
-
-当 notebook 出现很多相似 cell：
-
-- 相似筛选
-- 相似 groupby / aggregation
-- 相似图表骨架
-- 只换字段或颜色
-
-通常说明模式已经稳定。
-
-### Why it works
-
-这是抽 helper 的成熟信号，而不是继续复制的理由。
-
-### Example
-
-来源：
-
-- `goodreads-eda.py`
-- `polars_intro.py`
-
-它们都包含大量相似展示 skeleton。
-
-### Skill implication
-
-当模式稳定后，优先抽：
-
-- `build_*_chart`
-- `compute_*_summary`
-- `render_*_panel`
-
-而不是继续堆平行 cell。
-
-## 8. Long Narrative Cells Need Different Treatment From App-Like Cells
-
-### Pattern
-
-不是所有长 cell 都是坏味道。
-
-两类长 cell 要区分：
-
-1. narrative / teaching cell
-2. app-like / pseudo-component cell
-
-### Why it matters
-
-第一类主要是在解释、展示、教学；第二类则在承担组件职责。
+- Repeated filtering, aggregation, chart skeletons, or rendering panels
+- A clear input/output boundary has formed
+- Multiple groups of `mo.state` or dynamic UI collections coordinate together
+- Parameter synchronization or add/remove controls are maintained across cells
+- A reusable domain capability is clearer than another notebook-local cell
 
 ### Examples
 
-更像 narrative / teaching：
-
-- `polars_intro.py`
-- `akatsuki-tutorial.py`
-- `xdsl.py`
-
-更像 app-like / pseudo-component：
-
-- `laurium-prompt_engineering.py`
-- `monitoring-ghg-emissions.py`
+- `bennet-meyers-notebook.py`: module boundaries and multi-state coordination
+- `goodreads-eda.py` / `polars_intro.py`: repeated chart and presentation skeletons
 
 ### Skill implication
 
-写 notebook 时，不要因为 cell 稍长就机械拆散；先判断它是在讲解，还是在偷偷承载组件逻辑。
+Do not extract before the exploratory pattern is visible. Once reuse, state coordination, or maintenance cost is clear, move stable capability to a helper module and keep the notebook as analysis orchestration.
+
+## 9. Presentation And App Drift Signals
+
+### Pattern
+
+Watch for notebook structure that serves staged display more than exploration:
+
+- `mo.stop(...)`, staged reveal, or phased prompts in ordinary EDA
+- Dashboard-like `mo.vstack` / `mo.hstack` panels
+- Long explanatory copy before raw rows or low-assumption plots
+- UI sections that demonstrate controls rather than reduce analysis friction
+- Long cells carrying component responsibilities instead of local narrative or teaching
+
+### Examples
+
+- `laurium-prompt_engineering.py`: a staged workflow suited to prompt engineering, not default EDA
+- `monitoring-ghg-emissions.py`: app-like / pseudo-component structure
+- `polars_intro.py`, `akatsuki-tutorial.py`, `xdsl.py`: long narrative / teaching cells that should not be mechanically split
+
+### Skill implication
+
+Progressive disclosure and layout composition are valid only when the task is genuinely a workflow, teaching artifact, or app. For EDA, restore raw evidence, low-assumption diagnostics, and focused validation before polish.
 
 ## Summary
 
-最值得固化进 skill 主文档的只有这些短规则：
+Only these short rules are worth hardening into the main skill document:
 
-- create stable seams early
+- keep evidence upstream of decisions
+- build data intuition before testing hypotheses
+- keep EDA story logic discovery-first, not presentation-first
+- prefer low-state controls for reversible exploration
+- name stable seams when they emerge
 - keep UI cells thin
 - close one exploration loop locally
-- let notebooks orchestrate
-- treat multi-state coordination as an extraction signal
-- use progressive disclosure sparingly
+- treat extraction as a signal, not a starting point
+- resist presentation and app drift
 
-其余细节和例子放在这里，作为写作和评审时的支撑材料。
+Remaining details and examples are kept here as supporting material for writing and review.
